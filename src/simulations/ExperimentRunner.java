@@ -249,7 +249,7 @@ public class ExperimentRunner {
 
 		int reward = 100;
 		int maxLevelOthers = 0;
-		String gameType = "turkey";
+		String gameType = "pd";
 		String file = "/Users/betsy/grid_games/worlds/TwoAgentsHall_3by5_2Walls.json"; //"NOFILE";
 		
 		//"/Users/betsy/grid_games/worlds/TwoAgentsTwoGoals0.json"
