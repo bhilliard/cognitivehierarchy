@@ -1,22 +1,35 @@
 package simulations;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import networking.common.GridGameWorldLoader;
+import behavior.SpecifyNoopCostRewardFunction;
 import burlap.behavior.singleagent.Policy;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.stochasticgame.GameAnalysis;
 import burlap.behavior.stochasticgame.GameSequenceVisualizer;
 import burlap.behavior.stochasticgame.agents.BestResponseToDistributionAgent;
+import burlap.behavior.stochasticgame.agents.BRDPlanThenCombinePoliciesAgent;
 import burlap.behavior.stochasticgame.agents.RandomAgent;
+import burlap.behavior.stochasticgame.agents.SetStrategyAgent;
+import burlap.behavior.stochasticgame.agents.TransparentSetStrategyAgent;
+import burlap.behavior.stochasticgame.agents.naiveq.SGNaiveQLAgent;
 import burlap.behavior.stochasticgame.saconversion.RandomSingleAgentPolicy;
+import burlap.behavior.stochasticgame.saconversion.SingleToMultiPolicy;
 import burlap.domain.stochasticgames.gridgame.GGVisualizer;
 import burlap.domain.stochasticgames.gridgame.GridGame;
 import burlap.domain.stochasticgames.gridgame.GridGameStandardMechanics;
+import burlap.oomdp.auxiliary.StateParser;
+import burlap.oomdp.auxiliary.common.StateJSONParser;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
 import burlap.oomdp.stochasticgames.Agent;
@@ -29,267 +42,481 @@ import burlap.oomdp.stochasticgames.SingleAction;
 import burlap.oomdp.stochasticgames.World;
 import burlap.oomdp.stochasticgames.common.ConstantSGStateGenerator;
 import burlap.oomdp.visualizer.Visualizer;
-
+import burlap.behavior.singleagent.planning.commonpolicies.CachedPolicy;
 
 /***
- * ExperimentRunner handles learning policies of agents from level-0 to specified 
- * level k. The policies are created in order allowing the next level to learn.
+ * ExperimentRunner handles learning policies of agents from level-0 to
+ * specified level k. The policies are created in order allowing the next level
+ * to learn.
  * 
  * @author betsy hilliard betsy@cs.brown.edu
  *
  */
 public class ExperimentRunner {
 
-	//Map from agent name (specific to location in game) to level to policy solved for
-	private Map<String,Map<Integer, Policy>> solvedAgentPolicies;
+	// Agent parameters
+	// Map from agent name (specific to location in game) to level to policy
+	// solved for
+	private Map<String, Map<Integer, Policy>> solvedAgentPolicies;
+	private int kLevel;
+	boolean runValueIteration, runStochasticPolicyPlanner;
 
-	private GridGame gg = new GridGame();
-	
-	private Agent oponent;
+	// Game parameters
+	private GridGame gridGame;
+	private String gameFile, outFile;
+	private SGDomain domain;
+	private double stepCost, noopCost, reward, tau;
+	private boolean incurCostOnNoop = true;
+	private World gameWorld;
 
-	private SGDomain d;
-	
-	private double stepCost = -1.0;
+	// Experiment parameters
+	private int numTrials;
+	private double[][][] scores;
 
-	public ExperimentRunner(){
-		oponent = new RandomAgent();
-		
-		d = (SGDomain)gg.generateDomain();
-		solvedAgentPolicies = new HashMap<String,Map<Integer, Policy>>();
+	public ExperimentRunner(String gameFile, int kLevel, double stepCost,
+			boolean incurCostOnNoOp, double noopCost, double reward,
+			double tau, boolean runValueIteration,
+			boolean runStochasticPolicyPlanner, int numTrials) {
 
+		this.gameFile = gameFile;
+		this.stepCost = stepCost;
+		this.noopCost = noopCost;
+		this.reward = reward;
+		this.tau = tau;
+		this.incurCostOnNoop = incurCostOnNoOp;
+		this.runValueIteration = runValueIteration;
+		this.runStochasticPolicyPlanner = runStochasticPolicyPlanner;
+		this.numTrials = numTrials;
+		this.kLevel = kLevel;
+		this.gridGame = new GridGame();
+		this.domain = (SGDomain) gridGame.generateDomain();
+		this.solvedAgentPolicies = new HashMap<String, Map<Integer, Policy>>();
 	}
 
 	/**
-	 * runExperiment runs 
+	 * runExperiment runs
+	 * 
 	 * @param gameType
 	 * @param reward
 	 * @param kLevel
 	 * @param fileName
 	 * @return
 	 */
-	public List<GameAnalysis> runExperiment(String gameType, double reward, int kLevel, double tau, String fileName, boolean runValueItteration){
+	public List<GameAnalysis> runExperiment() {
+
 		List<GameAnalysis> gas = new ArrayList<GameAnalysis>();
-		
-		World gameWorld;
 
 		StateHashFactory hashFactory = new DiscreteStateHashFactory();
 
-		//loop over all lower levels to learn their policies
-		for(int k = 0;k<kLevel;k++){
-			
-			//loop over join orders so that we learn as both agent0 and agent1
-			//we need this info for both agent locations so that we can learn the next level up
-			for(int otherFirst = 0;otherFirst<=1;otherFirst++){
-				System.out.println("LEVEL: "+k+" OTHERFIRST: "+otherFirst);
-				
-				//if we didn't specify a file, run a hardcoded game based on the name we gave
-				if(fileName.compareToIgnoreCase("NOFILE")==0){
+		// loop over all lower levels to learn their policies
+		for (int k = 0; k < kLevel; k++) {
 
-					State s = GridGame.getCorrdinationGameInitialState(d); 
-					if(gameType.compareToIgnoreCase("turkey")==0){
-						s = GridGame.getTurkeyInitialState(d);
-					}else if(gameType.compareToIgnoreCase("coordination")==0){
-						s = GridGame.getCorrdinationGameInitialState(d);
-					}else if(gameType.compareToIgnoreCase("prisonersdilemma")==0 || gameType.compareToIgnoreCase("pd")==0){
-						s = GridGame.getPrisonersDilemmaInitialState(d);
-					}
+			// loop over join orders so that we learn as both agent0 and agent1
+			// we need this info for both agent locations so that we can learn
+			// the next level up
+			for (int otherFirst = 0; otherFirst <= 1; otherFirst++) {
 
-					//create the Joint Action Model and add to the domain d
-					JointActionModel jam = new GridGameStandardMechanics(d);
-					d.setJointActionModel(jam);
+				createWorld();
 
-					//create a Joint Reward Function and 
-					JointReward jr = new GridGame.GGJointRewardFunction(d, stepCost, reward, reward, false);
-					TerminalFunction tf = new GridGame.GGTerminalFunction(d);
-					SGStateGenerator sg = new ConstantSGStateGenerator(s);
+				BestResponseToDistributionAgent brAgent;
+				brAgent = new BRDPlanThenCombinePoliciesAgent(
+						gameWorld.getDomain(), hashFactory, reward,
+						runValueIteration);
 
-					gameWorld = new World(d, jr, tf, sg);
-				}else{
-					gameWorld = GridGameWorldLoader.loadWorld(fileName);
+				// Creates a random opponent.
+				// brAgent needs opponent to play a game in order to plan.
+				Agent opponent = new RandomAgent();
 
-					d = gameWorld.getDomain();
+				joinWorldOrdered(brAgent, opponent, otherFirst);
 
-				}
+				// construct the other agent policies
 
-
-
-				BestResponseToDistributionAgent brAgent = new BestResponseToDistributionAgent(d, hashFactory, reward, runValueItteration);
-				if(k>0){
-					//oponent = new BestResponseToDistributionAgent(d, hashFactory);
-					oponent= new RandomAgent();
-				}
-
-
-				if(otherFirst==1){
-					oponent.joinWorld(gameWorld, new AgentType(GridGame.CLASSAGENT, d.getObjectClass(GridGame.CLASSAGENT), d.getSingleActions()));
-					brAgent.joinWorld(gameWorld, new AgentType(GridGame.CLASSAGENT, d.getObjectClass(GridGame.CLASSAGENT), d.getSingleActions()));
-				}else{
-					brAgent.joinWorld(gameWorld, new AgentType(GridGame.CLASSAGENT, d.getObjectClass(GridGame.CLASSAGENT), d.getSingleActions()));
-					oponent.joinWorld(gameWorld, new AgentType(GridGame.CLASSAGENT, d.getObjectClass(GridGame.CLASSAGENT), d.getSingleActions()));
-				}
-
-				//construct the other agent policies
-
-
-				List<SingleAction> actions = d.getSingleActions();
+				List<SingleAction> actions = domain.getSingleActions();
 
 				Policy lowerPolicy;
 
-				String oponentName = oponent.getAgentName();
+				String oponentName = opponent.getAgentName();
 				String brAgentName = brAgent.getAgentName();
-				System.out.println("Oponent's name: "+oponentName+ " BR2D's name: "+brAgentName);
-				
-				//if level 0, store policy because it's the random agent
-				if(k==0){
-					lowerPolicy = new RandomSingleAgentPolicy(oponentName, actions);
-					Map<Integer,Policy> agentPolicies;
-					//if no policies for this name exist, store policy
-					if(!solvedAgentPolicies.containsKey(oponentName)){
-						agentPolicies = new HashMap<Integer,Policy>();
+
+				// if level 0, store policy because it's the random agent
+				if (k == 0) {
+					lowerPolicy = new RandomSingleAgentPolicy(oponentName,
+							actions);
+					Map<Integer, Policy> agentPolicies;
+					// if no policies for this name exist, store policy
+					if (!solvedAgentPolicies.containsKey(oponentName)) {
+						agentPolicies = new HashMap<Integer, Policy>();
 						agentPolicies.put(k, lowerPolicy);
-					}else{
-						
+					} else {
 						agentPolicies = solvedAgentPolicies.get(oponentName);
-						System.out.println("seen this before: agentPolicies keys: "+agentPolicies.keySet());
 						agentPolicies.put(k, lowerPolicy);
-						System.out.println("seen this after: agentPolicies keys: "+agentPolicies.keySet());
 					}
 					solvedAgentPolicies.put(oponentName, agentPolicies);
 					printPolicyCollection();
-					
-				//otherwise, pull opponent's policy from previous level
-				}else{
-					lowerPolicy = solvedAgentPolicies.get(oponentName).get(k-1);
-					System.out.println("Pulling lower Policy: "+ lowerPolicy);
+
+					// otherwise, pull opponent's policy from previous level
+				} else {
+					lowerPolicy = solvedAgentPolicies.get(oponentName).get(
+							k - 1);
 				}
 
-				//This is for debugging
-//				for(String agentName : solvedAgentPolicies.keySet()){
-//					System.out.println("Num levels for "+agentName+": "+solvedAgentPolicies.get(agentName).size());
-//				}
-
-
-				//construct policy map to pass to Best Response agent
-				// NOTE: If we have more than two opponents, we would need a loop over opponents here...or maybe earlier
-				Map<String, Map<Integer,Policy>> allOtherAgentPolicies = new HashMap<String, Map<Integer,Policy>>();
+				// construct policy map to pass to Best Response agent
+				// NOTE: If we have more than two opponents, we would need a
+				// loop over opponents here...or maybe earlier
+				Map<String, Map<Integer, Policy>> allOtherAgentPolicies = new HashMap<String, Map<Integer, Policy>>();
 				HashMap<Integer, Policy> levelMap = new HashMap<Integer, Policy>();
-				for(int lev = 0;lev<=k;lev++){
-					levelMap.put(lev, solvedAgentPolicies.get(oponentName).get(lev));
-					System.out.println("getting: "+oponentName+", level: "+lev);
+				for (int lev = 0; lev <= k; lev++) {
+					levelMap.put(lev,
+							solvedAgentPolicies.get(oponentName).get(lev));
 				}
-				
-				
-				//this is the policies we want to use for learning for this agent
+
+				// this is the policies we want to use for learning for this
+				// agent
 				allOtherAgentPolicies.put(oponentName, levelMap);
 
-				//Now create a distribution for this agent
-				Map<String, Map<Integer,Double>> distributionOverAllOtherAgentPolicies  = new HashMap<String, Map<Integer,Double>>();
-				HashMap<Integer,Double> distribution = new HashMap<Integer,Double>();
-				double facSoFar = 1;
-				for(int lev = 0;lev<=k;lev++){
-					//System.out.println("dist value: "+(double)allOtherAgentPolicies.get(oponentName).size());
-					//the distribution should be based on lev and maxLevel and parameter
-					//
-					double f_k = 1;
-					
-					if(lev>0){
-						facSoFar*=lev;
-						f_k = (Math.pow(Math.E, tau*-1)*Math.pow(tau, lev))/facSoFar;
-					}
-					System.out.println("Dist: "+lev+" weight: "+f_k);
-					//distribution.put(lev, 1.0/(double)allOtherAgentPolicies.get(oponentName).size());
-					distribution.put(lev, f_k);
-					
-				}
-				
-				distributionOverAllOtherAgentPolicies.put(oponentName,distribution);
+				// Now create a distribution for this agent
 
-				brAgent.setOtherAgentPolicyMaps(allOtherAgentPolicies, distributionOverAllOtherAgentPolicies);
+				brAgent.setOtherAgentDetails(allOtherAgentPolicies, k);
 
-				//gameWorld.addWorldObserver(ob);
-				System.out.println("running game");
-				GameAnalysis ga = gameWorld.runGame();
-				
+				GameAnalysis ga = this.gameWorld.runGame();
+				CachedPolicy cp = new CachedPolicy(
+						new DiscreteStateHashFactory(), brAgent.getPolicy());
 
+				Map<Integer, Policy> agentPolicies;
+				if (!solvedAgentPolicies.containsKey(brAgentName)) {
+					agentPolicies = new HashMap<Integer, Policy>();
 
-
-				Map<Integer,Policy> agentPolicies;
-				if(!solvedAgentPolicies.containsKey(brAgentName)){
-					agentPolicies = new HashMap<Integer,Policy>();
-					agentPolicies.put(k+1, brAgent.getPolicy());
-				}else{
+					agentPolicies.put(k + 1, cp);
+				} else {
 					agentPolicies = solvedAgentPolicies.get(brAgentName);
-					agentPolicies.put(k+1, brAgent.getPolicy());
+					agentPolicies.put(k + 1, cp);
 				}
-				
-				System.out.println("Added: "+brAgent.getPolicy()+" br name: "+brAgent.getAgentName()+" lev: "+(k+1));
+
 				solvedAgentPolicies.put(brAgentName, agentPolicies);
 				printPolicyCollection();
-				
-				
-				//System.out.println("SAP size: "+solvedAgentPolicies.size());
-				for(String agentName : solvedAgentPolicies.keySet()){
-					//System.out.println("Num levels for "+agentName+": "+solvedAgentPolicies.get(agentName).size());
-				}
-				
 
-				//add the game analysis to the records 
+				// add the game analysis to the records
 				gas.add(ga);
-
-				System.out.println("Level: "+k+" BR Agent Name: "+brAgent.getAgentName());
-
-			
 			}
 		}
 
+		this.outFile = runCompetition(solvedAgentPolicies, kLevel, numTrials);
 		return gas;
 	}
-	
-	private void printPolicyCollection(){
-		for(String a : solvedAgentPolicies.keySet()){
-			System.out.println("Agent "+a+": ");
-			for(Integer i : solvedAgentPolicies.get(a).keySet()){
-				System.out.println("lev: "+i+": "+solvedAgentPolicies.get(a).get(i));
+
+	private void joinWorldOrdered(Agent player, Agent opponent, int otherFirst) {
+		if (otherFirst == 1) {
+			opponent.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, domain
+							.getObjectClass(GridGame.CLASSAGENT), domain
+							.getSingleActions()));
+			player.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, domain
+							.getObjectClass(GridGame.CLASSAGENT), domain
+							.getSingleActions()));
+		} else {
+			player.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, domain
+							.getObjectClass(GridGame.CLASSAGENT), domain
+							.getSingleActions()));
+			opponent.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, domain
+							.getObjectClass(GridGame.CLASSAGENT), domain
+							.getSingleActions()));
+		}
+	}
+
+	private void printPolicyCollection() {
+		for (String a : solvedAgentPolicies.keySet()) {
+			System.out.println("Agent " + a + ": ");
+			for (Integer i : solvedAgentPolicies.get(a).keySet()) {
+				System.out.println("lev: " + i + ": "
+						+ solvedAgentPolicies.get(a).get(i));
 			}
 		}
 		System.out.println();
 	}
 
 	private SGDomain getDomain() {
-		return d;
+		return domain;
+	}
+
+	private String runCompetition(Map<String, Map<Integer, Policy>> policyMap,
+			int numLevels, int numRuns) {
+
+		double[][][] rewardMatrix = new double[numLevels + 1][numLevels + 1][2];
+		Map<Integer, Policy> rowAgent, colAgent;
+
+		rowAgent = policyMap.get("agent0");
+		colAgent = policyMap.get("agent1");
+
+		Date date = new Date();
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
+		String outDir = "../" + ft.format(date) + "/";
+
+		for (int t = 0; t < numRuns; t++) {
+			for (int i = 0; i < rowAgent.size(); i++) {
+				for (int j = 0; j < colAgent.size(); j++) {
+
+					createWorld();
+
+					SetStrategyAgent rowPlayer = new TransparentSetStrategyAgent(
+							this.domain, new SingleToMultiPolicy(
+									rowAgent.get(i), this.domain, "agent0"));
+					SetStrategyAgent colPlayer = new TransparentSetStrategyAgent(
+							this.domain, new SingleToMultiPolicy(
+									colAgent.get(j), this.domain, "agent1"));
+
+					rowPlayer.joinWorld(
+							this.gameWorld,
+							new AgentType(GridGame.CLASSAGENT, this.domain
+									.getObjectClass(GridGame.CLASSAGENT),
+									this.domain.getSingleActions()));
+					colPlayer.joinWorld(
+							this.gameWorld,
+							new AgentType(GridGame.CLASSAGENT, this.domain
+									.getObjectClass(GridGame.CLASSAGENT),
+									this.domain.getSingleActions()));
+
+					GameAnalysis ga = this.gameWorld.runGame(100);
+					List<Map<String, Double>> jointRewards = ga
+							.getJointRewards();
+					Map<String, Double> agentReward = new HashMap<String, Double>();
+
+					for (Map<String, Double> rewards : jointRewards) {
+						for (String agentKey : rewards.keySet()) {
+							if (agentReward.containsKey(agentKey)) {
+								agentReward.put(
+										agentKey,
+										agentReward.get(agentKey)
+												+ rewards.get(agentKey));
+							} else {
+								agentReward
+										.put(agentKey, rewards.get(agentKey));
+							}
+						}
+					}
+
+					rewardMatrix[i][j][0] += agentReward.get("agent0");
+					rewardMatrix[j][i][1] += agentReward.get("agent1");
+					StateParser sp = new StateJSONParser(domain);
+
+					String outFile = outDir + "Green_" + i + "_Blue_" + j + "/"
+							+ "G" + i + "B" + j + "_Trial_" + t;
+
+					ga.writeToFile(outFile, sp);
+
+					if (t == numRuns - 1) {
+						rewardMatrix[i][j][0] /= numRuns;
+						rewardMatrix[j][i][1] /= numRuns;
+					}
+				}
+			}
+		}
+
+		this.scores = rewardMatrix;
+		return outDir;
+	}
+
+	public ArrayList<GameAnalysis> runQLearners(int numTrials) {
+		SGNaiveQLAgent agent, opponent;
+		double discount = 0.99;
+		double learningRate = 0.01;
+		StateHashFactory hashFactory = new DiscreteStateHashFactory();
+		Map<String, Double> agentReward = new HashMap<String, Double>();
+		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
+		agent = new SGNaiveQLAgent(domain, discount, learningRate, hashFactory);
+		opponent = new SGNaiveQLAgent(domain, discount, learningRate,
+				hashFactory);
+
+		for (int i = 0; i < numTrials; i++) {
+
+			createWorld();
+
+			agent.joinWorld(this.gameWorld, new AgentType(GridGame.CLASSAGENT,
+					this.domain.getObjectClass(GridGame.CLASSAGENT),
+					this.domain.getSingleActions()));
+			opponent.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, this.domain
+							.getObjectClass(GridGame.CLASSAGENT), this.domain
+							.getSingleActions()));
+
+			GameAnalysis ga = this.gameWorld.runGame(100);
+
+			if (i >= numTrials -100) {
+				gas.add(ga);
+				List<Map<String, Double>> jointRewards = ga.getJointRewards();
+
+				for (Map<String, Double> rewards : jointRewards) {
+					for (String agentKey : rewards.keySet()) {
+						if (agentReward.containsKey(agentKey)) {
+							agentReward.put(agentKey, agentReward.get(agentKey)
+									+ rewards.get(agentKey));
+						} else {
+							agentReward.put(agentKey, rewards.get(agentKey));
+						}
+					}
+				}
+			}
+			for (String keyName : agentReward.keySet()) {
+				agentReward.put(keyName, agentReward.get(keyName) / 100.0);
+				System.out.println(keyName + ": " + agentReward.get(keyName));
+			}
+			System.out.println(ga.getJointRewards());
+		}
+		return gas;
+	}
+
+	public void writeMetaData() {
+		PrintWriter writer, writerGreen, writerBlue, current;
+		try {
+			writer = new PrintWriter(outFile + "meta.txt", "UTF-8");
+			writerGreen = new PrintWriter(outFile + "scoresGreen", "UTF-8");
+			writerBlue = new PrintWriter(outFile + "scoresBlue", "UTF-8");
+			String noop;
+			if (this.incurCostOnNoop)
+				noop = Double.toString(this.noopCost);
+			else
+				noop = "0.0";
+
+			writer.println("Game File/Type: " + this.gameFile);
+			writer.println("k-Level: " + this.kLevel);
+			writer.println("Tau: " + this.tau);
+			writer.println("Reward Value: " + this.reward);
+			writer.println("Using VI: " + this.runValueIteration);
+			writer.println("Using Stochastic Policies: "
+					+ this.runStochasticPolicyPlanner);
+			writer.println("Step Cost: " + this.stepCost);
+			writer.println("Noop Cost: " + noop);
+			writer.println("Number of trials: " + this.numTrials);
+			writer.println("Score Matrices:");
+			for (int m = 0; m < 2; m++) {
+				if (m == 0){
+					writer.println("Green Agent:");
+					current = writerGreen;
+				}else{
+					writer.println("Blue Agent:");
+					current = writerBlue;
+				}
+				for (int i = 0; i < this.scores.length; i++) {
+					writer.print(i + ": ");
+					for (int j = 0; j < this.scores.length; j++) {
+						writer.print(this.scores[i][j][m] + " ");
+						current.print(this.scores[i][j][m] + " ");
+					}
+					writer.println();
+				}
+				writer.println();
+			}
+			writer.close();
+			writerGreen.close();
+			writerBlue.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void createWorld() {
+		// if we didn't specify a file, run a hardcoded game based on
+		// the name we gave
+		if (!this.gameFile.endsWith(".json")) {
+
+			State s = GridGame.getCorrdinationGameInitialState(this.domain);
+			if (this.gameFile.equals("turkey")) {
+				s = GridGame.getTurkeyInitialState(this.domain);
+			} else if (this.gameFile.equals("coordination")) {
+				s = GridGame.getCorrdinationGameInitialState(this.domain);
+			} else if (this.gameFile.equals("prisonersdilemma")
+					|| this.gameFile.equals("pd")) {
+				s = GridGame.getPrisonersDilemmaInitialState(this.domain);
+			}
+
+			// create the Joint Action Model and add to the domain d
+			JointActionModel jam = new GridGameStandardMechanics(this.domain);
+			this.domain.setJointActionModel(jam);
+
+			// create a Joint Reward Function (orignal burlap, no noop specific
+			// cost)
+			// JointReward jr = new GridGame.GGJointRewardFunction(d,
+			// stepCost, reward, reward, incurCostOnNoOp);
+
+			// create a Joint Reward Function
+			JointReward jr = new SpecifyNoopCostRewardFunction(this.domain,
+					this.stepCost, this.reward, this.reward,
+					this.incurCostOnNoop, this.noopCost);
+			TerminalFunction tf = new GridGame.GGTerminalFunction(this.domain);
+			SGStateGenerator sg = new ConstantSGStateGenerator(s);
+
+			this.gameWorld = new World(this.domain, jr, tf, sg);
+		} else {
+			this.gameWorld = GridGameWorldLoader.loadWorld(this.gameFile,
+					this.stepCost, this.reward, this.incurCostOnNoop,
+					this.noopCost);
+			this.domain = this.gameWorld.getDomain();
+		}
 	}
 
 	public static void main(String[] args) {
 
-		double reward = 50.0; //Set this to set the rewards for goals. 
-							  //This should maybe be set by a config file called by the BR2D agent later.
-		int kLevel = 1; //This is the level the "smartest" agent will be.
-		int tau = 2; //Parameter defines the distribution over lower levels that the agent assumes.
-		
-		boolean runValueIteration = true; // set to false to run the BoundedRTDP agent instead on ValueIteration
-		
-		String file = "/Users/betsy/grid_games/worlds/TwoAgentsHall_3by5_2Walls.json"; //"NOFILE";
-		
-		//if file is set to "NOFILE" you can specify a common, built-in game
-		String gameType = "turkey"; // Built in options: "turkey", "prisonersdilema" "coordination"
-		
-		//OTHER FILES
-		//"/Users/betsy/grid_games/worlds/TwoAgentsTwoGoals0.json"
-		//"/Users/betsy/grid_games/worlds/TwoAgentsTwoGoals1.json"
-		//"/Users/betsy/grid_games/worlds/TwoAgentsTwoGoals2.json"
-		//"/Users/betsy/grid_games/worlds/LavaPits.json"
-		//"/Users/betsy/grid_games/worlds/TwoAgentsTunnels"
-		//"/Users/betsy/grid_games/worlds/TwoAgentsHall_3by5_2Walls.json"
-		//"/Users/betsy/grid_games/worlds/TwoAgentsHall_3by5_noWalls.json"
-		
+		double reward = 50.0; // Set this to set the rewards for goals.
+								// This should maybe be set by a config file
+								// called by the BR2D agent later.
+		double stepCost = -1.0;
+		double noopCost = -0.75;
+		boolean incurCostOnNoop = true;
+		int kLevel = 5; // This is the level the "smartest" agent will be.
+		int tau = 2; // Parameter defines the distribution over lower levels
+						// that the agent assumes.
 
-		ExperimentRunner runner = new ExperimentRunner();
-		List<GameAnalysis> gas = runner.runExperiment(gameType, reward, kLevel,tau,file, runValueIteration);
+		boolean runValueIteration = false; // set to false to run the
+											// BoundedRTDP
+											// agent instead on ValueIteration
+		boolean runStochasticPolicyPlanner = true; // handles when policies are
+													// stochastically combined
+		int numTrials = 100;
 
-		//runs the visualizer for all agent games
-		Visualizer v = GGVisualizer.getVisualizer(6,6);
-		GameSequenceVisualizer gsv = new GameSequenceVisualizer(v,runner.getDomain(),gas);
+		String[] gameFile = new String[] {
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json",
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json",
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json",
+				"../MultiAgentGames/resources/worlds/LavaPits.json",
+				"../MultiAgentGames/resources/worlds/TwoAgentsTunnels",
+				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json",
+				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json",
+				"turkey", "coordination", "prisonersdilemma" };
 
+		// Choose from a json game file or built-in option from the list above.
+		String file = gameFile[6];
+
+		// Execution timer
+		long startTime = System.currentTimeMillis();
+
+		ExperimentRunner runner = new ExperimentRunner(file, kLevel, stepCost,
+				incurCostOnNoop, noopCost, reward, tau, runValueIteration,
+				runStochasticPolicyPlanner, numTrials);
+		 List<GameAnalysis> gas = runner.runExperiment();
+//		List<GameAnalysis> gas = runner.runQLearners(numTrials);
+
+		long endTime = System.currentTimeMillis();
+		long totalTime = endTime - startTime;
+
+		System.out.println("Total time:  " + totalTime / 1000.0 + " s");
+
+		// runs the visualizer for all agent games
+		Visualizer v = GGVisualizer.getVisualizer(6, 6);
+		 ExperimentVisualizer gsv = new ExperimentVisualizer(v,
+		 runner.getDomain(), runner.outFile);
+//		GameSequenceVisualizer gsv = new GameSequenceVisualizer(v,
+//				runner.getDomain(), gas);
+
+		// Output experiment parameters to file
+		runner.writeMetaData();
 	}
-
 }
