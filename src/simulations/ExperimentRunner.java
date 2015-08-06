@@ -16,7 +16,6 @@ import burlap.behavior.singleagent.Policy;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.stochasticgame.GameAnalysis;
-import burlap.behavior.stochasticgame.GameSequenceVisualizer;
 import burlap.behavior.stochasticgame.agents.BestResponseToDistributionAgent;
 import burlap.behavior.stochasticgame.agents.BRDPlanThenCombinePoliciesAgent;
 import burlap.behavior.stochasticgame.agents.RandomAgent;
@@ -42,7 +41,9 @@ import burlap.oomdp.stochasticgames.SingleAction;
 import burlap.oomdp.stochasticgames.World;
 import burlap.oomdp.stochasticgames.common.ConstantSGStateGenerator;
 import burlap.oomdp.visualizer.Visualizer;
+import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.CachedPolicy;
+import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 
 /***
  * ExperimentRunner handles learning policies of agents from level-0 to
@@ -70,8 +71,11 @@ public class ExperimentRunner {
 	private World gameWorld;
 
 	// Experiment parameters
-	private int numTrials;
+	private int numTrials, numLearningEpisodes;
 	private double[][][] scores;
+
+	private final double DISCOUNT_FACTOR = 0.99, LEARNING_RATE = 0.01;
+	private final int TIMEOUT = 100;
 
 	public ExperimentRunner(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoOp, double noopCost, double reward,
@@ -282,7 +286,7 @@ public class ExperimentRunner {
 									.getObjectClass(GridGame.CLASSAGENT),
 									this.domain.getSingleActions()));
 
-					GameAnalysis ga = this.gameWorld.runGame(100);
+					GameAnalysis ga = this.gameWorld.runGame(TIMEOUT);
 					List<Map<String, Double>> jointRewards = ga
 							.getJointRewards();
 					Map<String, Double> agentReward = new HashMap<String, Double>();
@@ -322,21 +326,21 @@ public class ExperimentRunner {
 		return outDir;
 	}
 
-	public ArrayList<GameAnalysis> runQLearners(int numTrials) {
+	public String runQLearners(int numEpisodes) {
+		this.numLearningEpisodes = numEpisodes;
 		SGNaiveQLAgent agent, opponent;
-		double discount = 0.99;
-		double learningRate = 0.01;
 		StateHashFactory hashFactory = new DiscreteStateHashFactory();
-		Map<String, Double> agentReward = new HashMap<String, Double>();
+		// Map<String, Double> agentReward = new HashMap<String, Double>();
 		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
-		agent = new SGNaiveQLAgent(domain, discount, learningRate, hashFactory);
-		opponent = new SGNaiveQLAgent(domain, discount, learningRate,
-				hashFactory);
 
-		for (int i = 0; i < numTrials; i++) {
+		agent = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
+				this.LEARNING_RATE, hashFactory);
+		opponent = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
+				this.LEARNING_RATE, hashFactory);
 
+		// Learning Phase
+		for (int i = 0; i < numEpisodes; i++) {
 			createWorld();
-
 			agent.joinWorld(this.gameWorld, new AgentType(GridGame.CLASSAGENT,
 					this.domain.getObjectClass(GridGame.CLASSAGENT),
 					this.domain.getSingleActions()));
@@ -345,31 +349,66 @@ public class ExperimentRunner {
 					new AgentType(GridGame.CLASSAGENT, this.domain
 							.getObjectClass(GridGame.CLASSAGENT), this.domain
 							.getSingleActions()));
-
-			GameAnalysis ga = this.gameWorld.runGame(100);
-
-			if (i >= numTrials -100) {
-				gas.add(ga);
-				List<Map<String, Double>> jointRewards = ga.getJointRewards();
-
-				for (Map<String, Double> rewards : jointRewards) {
-					for (String agentKey : rewards.keySet()) {
-						if (agentReward.containsKey(agentKey)) {
-							agentReward.put(agentKey, agentReward.get(agentKey)
-									+ rewards.get(agentKey));
-						} else {
-							agentReward.put(agentKey, rewards.get(agentKey));
-						}
-					}
-				}
-			}
-			for (String keyName : agentReward.keySet()) {
-				agentReward.put(keyName, agentReward.get(keyName) / 100.0);
-				System.out.println(keyName + ": " + agentReward.get(keyName));
-			}
-			System.out.println(ga.getJointRewards());
+			this.gameWorld.runGame(TIMEOUT);
 		}
-		return gas;
+
+		Date date = new Date();
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
+		String outDir = "../" + ft.format(date) + "/";
+
+		// Execution Phase
+		SetStrategyAgent agentSet = new SetStrategyAgent(domain,
+				new GreedyQPolicy((QComputablePlanner) agent));
+		SetStrategyAgent opponentSet = new SetStrategyAgent(domain,
+				new GreedyQPolicy((QComputablePlanner) opponent));
+
+		for (int i = 0; i < this.numTrials; i++) {
+
+			createWorld();
+
+			agentSet.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, this.domain
+							.getObjectClass(GridGame.CLASSAGENT), this.domain
+							.getSingleActions()));
+			opponentSet.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, this.domain
+							.getObjectClass(GridGame.CLASSAGENT), this.domain
+							.getSingleActions()));
+
+			GameAnalysis ga = this.gameWorld.runGame(TIMEOUT);
+
+			gas.add(ga);
+
+			// List<Map<String, Double>> jointRewards = ga.getJointRewards();
+			//
+			// for (Map<String, Double> rewards : jointRewards) {
+			// for (String agentKey : rewards.keySet()) {
+			// if (agentReward.containsKey(agentKey)) {
+			// agentReward.put(agentKey, agentReward.get(agentKey)
+			// + rewards.get(agentKey));
+			// } else {
+			// agentReward.put(agentKey, rewards.get(agentKey));
+			// }
+			// }
+			// }
+			// for (String keyName : agentReward.keySet()) {
+			// agentReward.put(keyName, agentReward.get(keyName)
+			// / (1.0 * this.numTrials));
+			// }
+
+			StateParser sp = new StateJSONParser(domain);
+			System.out.println(ga.getJointRewards());
+			String outFile = outDir + "Green_Q" + "_Blue_Q" + "/" + "GQ" + "BQ"
+					+ "_Trial_" + i;
+
+			ga.writeToFile(outFile, sp);
+
+		}
+		
+		this.outFile = outDir;
+		return outDir;
 	}
 
 	public void writeMetaData() {
@@ -394,12 +433,13 @@ public class ExperimentRunner {
 			writer.println("Step Cost: " + this.stepCost);
 			writer.println("Noop Cost: " + noop);
 			writer.println("Number of trials: " + this.numTrials);
+			writer.println("Game timeout: " + this.TIMEOUT + " moves");
 			writer.println("Score Matrices:");
 			for (int m = 0; m < 2; m++) {
-				if (m == 0){
+				if (m == 0) {
 					writer.println("Green Agent:");
 					current = writerGreen;
-				}else{
+				} else {
 					writer.println("Blue Agent:");
 					current = writerBlue;
 				}
@@ -416,6 +456,36 @@ public class ExperimentRunner {
 			writer.close();
 			writerGreen.close();
 			writerBlue.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void writeMetaDataForQLearners() {
+		PrintWriter writer;
+		try {
+			writer = new PrintWriter(outFile + "meta.txt", "UTF-8");
+			String noop;
+			if (this.incurCostOnNoop)
+				noop = Double.toString(this.noopCost);
+			else
+				noop = "0.0";
+
+			writer.println("Game File/Type: " + this.gameFile);
+			writer.println("Reward Value: " + this.reward);
+			writer.println("Using VI: " + this.runValueIteration);
+			writer.println("Step Cost: " + this.stepCost);
+			writer.println("Noop Cost: " + noop);
+			writer.println("Number of learning episodes: "
+					+ this.numLearningEpisodes);
+			writer.println("Number of execution trials: " + this.numTrials);
+			writer.println("Discount factor: " + this.DISCOUNT_FACTOR);
+			writer.println("Learning rate: " + this.LEARNING_RATE);
+			writer.println("Game timeout: " + this.TIMEOUT + " moves");
+
+			writer.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
@@ -480,7 +550,7 @@ public class ExperimentRunner {
 											// agent instead on ValueIteration
 		boolean runStochasticPolicyPlanner = true; // handles when policies are
 													// stochastically combined
-		int numTrials = 100;
+		int numTrials = 10;
 
 		String[] gameFile = new String[] {
 				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json",
@@ -501,22 +571,22 @@ public class ExperimentRunner {
 		ExperimentRunner runner = new ExperimentRunner(file, kLevel, stepCost,
 				incurCostOnNoop, noopCost, reward, tau, runValueIteration,
 				runStochasticPolicyPlanner, numTrials);
-		 List<GameAnalysis> gas = runner.runExperiment();
-//		List<GameAnalysis> gas = runner.runQLearners(numTrials);
+
+		// Run k-Level
+		// runner.runExperiment();
+		// runner.writeMetaData();
+
+		// Run Q-Learners
+		int numLearningEpisodes = 50000;
+		runner.runQLearners(numLearningEpisodes);
+		runner.writeMetaDataForQLearners();
+
+		// Visualize Results
+		Visualizer v = GGVisualizer.getVisualizer(6, 6);
+		new ExperimentVisualizer(v, runner.getDomain(), runner.outFile);
 
 		long endTime = System.currentTimeMillis();
 		long totalTime = endTime - startTime;
-
 		System.out.println("Total time:  " + totalTime / 1000.0 + " s");
-
-		// runs the visualizer for all agent games
-		Visualizer v = GGVisualizer.getVisualizer(6, 6);
-		 ExperimentVisualizer gsv = new ExperimentVisualizer(v,
-		 runner.getDomain(), runner.outFile);
-//		GameSequenceVisualizer gsv = new GameSequenceVisualizer(v,
-//				runner.getDomain(), gas);
-
-		// Output experiment parameters to file
-		runner.writeMetaData();
 	}
 }

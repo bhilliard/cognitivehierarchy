@@ -64,8 +64,10 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 		this.episodesListModel = new DefaultListModel();
 
 		for (File match : matchFiles) {
-			for (File trial : match.listFiles()) {
-				episodesListModel.addElement(trial.getName());
+			if (match.isDirectory()) {
+				for (File trial : match.listFiles()) {
+					episodesListModel.addElement(trial.getName());
+				}
 			}
 		}
 	}
