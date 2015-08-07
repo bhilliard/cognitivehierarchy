@@ -8,6 +8,8 @@ import javax.swing.DefaultListModel;
 
 import burlap.behavior.stochasticgame.GameAnalysis;
 import burlap.behavior.stochasticgame.GameSequenceVisualizer;
+import burlap.domain.stochasticgames.gridgame.GGVisualizer;
+import burlap.domain.stochasticgames.gridgame.GridGame;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.auxiliary.common.StateJSONParser;
 import burlap.oomdp.stochasticgames.SGDomain;
@@ -70,5 +72,13 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 				}
 			}
 		}
+	}
+
+	public static void main(String[] args) {
+		String dirName = "../2015_08_06_02_25_43";
+		if (!dirName.endsWith("/"))
+			dirName += "/";
+		new ExperimentVisualizer(GGVisualizer.getVisualizer(6, 6),
+				(SGDomain) new GridGame().generateDomain(), dirName);
 	}
 }

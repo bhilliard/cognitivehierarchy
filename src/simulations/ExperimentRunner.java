@@ -13,6 +13,8 @@ import java.util.Map;
 import networking.common.GridGameWorldLoader;
 import behavior.SpecifyNoopCostRewardFunction;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.ValueFunctionInitialization;
+import burlap.behavior.singleagent.ValueFunctionInitialization.ConstantValueFunctionInitialization;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
 import burlap.behavior.stochasticgame.GameAnalysis;
@@ -42,6 +44,7 @@ import burlap.oomdp.stochasticgames.World;
 import burlap.oomdp.stochasticgames.common.ConstantSGStateGenerator;
 import burlap.oomdp.visualizer.Visualizer;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
+import burlap.behavior.singleagent.planning.commonpolicies.BoltzmannQPolicy;
 import burlap.behavior.singleagent.planning.commonpolicies.CachedPolicy;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 
@@ -73,6 +76,8 @@ public class ExperimentRunner {
 	// Experiment parameters
 	private int numTrials, numLearningEpisodes;
 	private double[][][] scores;
+	private boolean optimisticInit, boltzmannExplore;
+	private double temp;
 
 	private final double DISCOUNT_FACTOR = 0.99, LEARNING_RATE = 0.01;
 	private final int TIMEOUT = 100;
@@ -338,6 +343,23 @@ public class ExperimentRunner {
 		opponent = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
 				this.LEARNING_RATE, hashFactory);
 
+		this.optimisticInit = true;
+
+		if (optimisticInit) {
+			ValueFunctionInitialization initValue = (ValueFunctionInitialization) new ConstantValueFunctionInitialization(
+					this.reward - 10);
+			agent.setQValueInitializer(initValue);
+			opponent.setQValueInitializer(initValue);
+		}
+
+		this.boltzmannExplore = true;
+
+		if (this.boltzmannExplore) {
+			this.temp = 0.5;
+			agent.setStrategy(new BoltzmannQPolicy(agent, this.temp));
+			opponent.setStrategy(new BoltzmannQPolicy(opponent, this.temp));
+		}
+
 		// Learning Phase
 		for (int i = 0; i < numEpisodes; i++) {
 			createWorld();
@@ -406,7 +428,7 @@ public class ExperimentRunner {
 			ga.writeToFile(outFile, sp);
 
 		}
-		
+
 		this.outFile = outDir;
 		return outDir;
 	}
@@ -475,7 +497,6 @@ public class ExperimentRunner {
 
 			writer.println("Game File/Type: " + this.gameFile);
 			writer.println("Reward Value: " + this.reward);
-			writer.println("Using VI: " + this.runValueIteration);
 			writer.println("Step Cost: " + this.stepCost);
 			writer.println("Noop Cost: " + noop);
 			writer.println("Number of learning episodes: "
@@ -483,6 +504,10 @@ public class ExperimentRunner {
 			writer.println("Number of execution trials: " + this.numTrials);
 			writer.println("Discount factor: " + this.DISCOUNT_FACTOR);
 			writer.println("Learning rate: " + this.LEARNING_RATE);
+			writer.println("Optimistic: " + this.optimisticInit);
+			writer.println("Boltzmann Exploration: " + this.boltzmannExplore);
+			if (this.boltzmannExplore)
+				writer.println("Boltzmann Temperature: " + this.temp);
 			writer.println("Game timeout: " + this.TIMEOUT + " moves");
 
 			writer.close();
@@ -538,8 +563,8 @@ public class ExperimentRunner {
 		double reward = 50.0; // Set this to set the rewards for goals.
 								// This should maybe be set by a config file
 								// called by the BR2D agent later.
-		double stepCost = -1.0;
-		double noopCost = -0.75;
+		double stepCost = -0.0;
+		double noopCost = -0.0;
 		boolean incurCostOnNoop = true;
 		int kLevel = 5; // This is the level the "smartest" agent will be.
 		int tau = 2; // Parameter defines the distribution over lower levels
