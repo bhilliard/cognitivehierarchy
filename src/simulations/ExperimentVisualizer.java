@@ -66,7 +66,7 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 		this.episodesListModel = new DefaultListModel();
 
 		for (File match : matchFiles) {
-			if (match.isDirectory()) {
+			if (match.isDirectory() && match.getName().contains("earning")) {
 				for (File trial : match.listFiles()) {
 					episodesListModel.addElement(trial.getName());
 				}
@@ -75,7 +75,7 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 	}
 
 	public static void main(String[] args) {
-		String dirName = "../2015_08_06_02_25_43";
+		String dirName = "../2015_08_12_03_19_52";
 		if (!dirName.endsWith("/"))
 			dirName += "/";
 		new ExperimentVisualizer(GGVisualizer.getVisualizer(6, 6),
