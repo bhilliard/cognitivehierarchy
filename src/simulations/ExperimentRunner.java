@@ -71,6 +71,7 @@ public class ExperimentRunner {
 	private SGDomain domain;
 	private double stepCost, noopCost, reward, tau;
 	private boolean incurCostOnNoop = true;
+	private boolean noopAllowed;
 	private World gameWorld;
 
 	// Experiment parameters
@@ -85,9 +86,10 @@ public class ExperimentRunner {
 	public ExperimentRunner(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoOp, double noopCost, double reward,
 			double tau, boolean runValueIteration,
-			boolean runStochasticPolicyPlanner, int numTrials) {
+			boolean runStochasticPolicyPlanner, int numTrials, boolean noopAllowed) {
 
 		this.gameFile = gameFile;
+		this.noopAllowed = noopAllowed;
 		this.stepCost = stepCost;
 		this.noopCost = noopCost;
 		this.reward = reward;
@@ -98,7 +100,12 @@ public class ExperimentRunner {
 		this.numTrials = numTrials;
 		this.kLevel = kLevel;
 		this.gridGame = new GridGame();
-		this.domain = (SGDomain) gridGame.generateDomain();
+		if(noopAllowed){
+			
+			this.domain = (SGDomain) gridGame.generateDomain();
+		}else{
+			this.domain = (SGDomain) gridGame.generateDomainWithoutNoops();
+		}
 		this.solvedAgentPolicies = new HashMap<String, Map<Integer, Policy>>();
 	}
 
@@ -302,10 +309,10 @@ public class ExperimentRunner {
 								agentReward.put(
 										agentKey,
 										agentReward.get(agentKey)
-												+ rewards.get(agentKey));
+										+ rewards.get(agentKey));
 							} else {
 								agentReward
-										.put(agentKey, rewards.get(agentKey));
+								.put(agentKey, rewards.get(agentKey));
 							}
 						}
 					}
@@ -352,7 +359,7 @@ public class ExperimentRunner {
 			opponent.setQValueInitializer(initValue);
 		}
 
-		this.boltzmannExplore = true;
+		this.boltzmannExplore = false;
 
 		if (this.boltzmannExplore) {
 			this.temp = 0.5;
@@ -381,6 +388,94 @@ public class ExperimentRunner {
 		// Execution Phase
 		SetStrategyAgent agentSet = new SetStrategyAgent(domain,
 				new GreedyQPolicy((QComputablePlanner) agent));
+		SetStrategyAgent opponentSet = new SetStrategyAgent(domain,
+				new GreedyQPolicy((QComputablePlanner) opponent));
+
+		for (int i = 0; i < this.numTrials; i++) {
+
+			createWorld();
+
+			agentSet.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, this.domain
+							.getObjectClass(GridGame.CLASSAGENT), this.domain
+							.getSingleActions()));
+			opponentSet.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, this.domain
+							.getObjectClass(GridGame.CLASSAGENT), this.domain
+							.getSingleActions()));
+
+			GameAnalysis ga = this.gameWorld.runGame(TIMEOUT);
+
+			gas.add(ga);
+
+			// List<Map<String, Double>> jointRewards = ga.getJointRewards();
+			//
+			// for (Map<String, Double> rewards : jointRewards) {
+			// for (String agentKey : rewards.keySet()) {
+			// if (agentReward.containsKey(agentKey)) {
+			// agentReward.put(agentKey, agentReward.get(agentKey)
+			// + rewards.get(agentKey));
+			// } else {
+			// agentReward.put(agentKey, rewards.get(agentKey));
+			// }
+			// }
+			// }
+			// for (String keyName : agentReward.keySet()) {
+			// agentReward.put(keyName, agentReward.get(keyName)
+			// / (1.0 * this.numTrials));
+			// }
+
+			StateParser sp = new StateJSONParser(domain);
+			System.out.println(ga.getJointRewards());
+			String outFile = outDir + "Green_Q" + "_Blue_Q" + "/" + "GQ" + "BQ"
+					+ "_Trial_" + i;
+
+			ga.writeToFile(outFile, sp);
+
+		}
+
+
+		this.outFile = outDir;
+		return outDir;
+	}
+
+	public String runQVsCooperator(int numEpisodes) {
+		this.numLearningEpisodes = numEpisodes;
+		SGNaiveQLAgent opponent;
+		StateHashFactory hashFactory = new DiscreteStateHashFactory();
+		// Map<String, Double> agentReward = new HashMap<String, Double>();
+		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
+
+		SimpleCooperativeStrategy agent = new SimpleCooperativeStrategy(domain);
+		opponent = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
+				this.LEARNING_RATE, hashFactory);
+
+		// Learning Phase
+		for (int i = 0; i < numEpisodes; i++) {
+
+			createWorld();
+			agent.joinWorld(this.gameWorld, new AgentType(GridGame.CLASSAGENT,
+					this.domain.getObjectClass(GridGame.CLASSAGENT),
+					this.domain.getSingleActions()));
+			opponent.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, this.domain
+							.getObjectClass(GridGame.CLASSAGENT), this.domain
+							.getSingleActions()));
+			//System.out.println(gameWorld);
+			//System.out.flush();
+			this.gameWorld.runGame(TIMEOUT);
+
+		}
+
+		Date date = new Date();
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
+		String outDir = "../" + ft.format(date) + "/";
+
+		// Execution Phase
+		SimpleCooperativeStrategy agentSet = new SimpleCooperativeStrategy(domain);
 		SetStrategyAgent opponentSet = new SetStrategyAgent(domain,
 				new GreedyQPolicy((QComputablePlanner) opponent));
 
@@ -533,6 +628,7 @@ public class ExperimentRunner {
 				s = GridGame.getPrisonersDilemmaInitialState(this.domain);
 			}
 
+
 			// create the Joint Action Model and add to the domain d
 			JointActionModel jam = new GridGameStandardMechanics(this.domain);
 			this.domain.setJointActionModel(jam);
@@ -561,21 +657,27 @@ public class ExperimentRunner {
 	public static void main(String[] args) {
 
 		double reward = 50.0; // Set this to set the rewards for goals.
-								// This should maybe be set by a config file
-								// called by the BR2D agent later.
-		double stepCost = -0.0;
-		double noopCost = -0.0;
+		// This should maybe be set by a config file
+		// called by the BR2D agent later.
+		double stepCost = -1.0;
+		double noopCost = -1.75;
+
 		boolean incurCostOnNoop = true;
+		boolean noopAllowed = true;
 		int kLevel = 5; // This is the level the "smartest" agent will be.
 		int tau = 2; // Parameter defines the distribution over lower levels
-						// that the agent assumes.
+		// that the agent assumes.
 
 		boolean runValueIteration = false; // set to false to run the
-											// BoundedRTDP
-											// agent instead on ValueIteration
+		// BoundedRTDP
+		// agent instead on ValueIteration
 		boolean runStochasticPolicyPlanner = true; // handles when policies are
-													// stochastically combined
+		// stochastically combined
+
+		boolean runKNotQTests = false;
+
 		int numTrials = 10;
+		int numLearningEpisodes = 10000;
 
 		String[] gameFile = new String[] {
 				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json",
@@ -595,16 +697,18 @@ public class ExperimentRunner {
 
 		ExperimentRunner runner = new ExperimentRunner(file, kLevel, stepCost,
 				incurCostOnNoop, noopCost, reward, tau, runValueIteration,
-				runStochasticPolicyPlanner, numTrials);
+				runStochasticPolicyPlanner, numTrials, noopAllowed);
 
 		// Run k-Level
-		// runner.runExperiment();
-		// runner.writeMetaData();
-
-		// Run Q-Learners
-		int numLearningEpisodes = 50000;
-		runner.runQLearners(numLearningEpisodes);
-		runner.writeMetaDataForQLearners();
+		if(runKNotQTests){
+			runner.runExperiment();
+			runner.writeMetaData();
+		}else{
+			// Run Q-Learners
+			//runner.runQVsCooperator(numLearningEpisodes);
+			runner.runQLearners(numLearningEpisodes);
+			runner.writeMetaDataForQLearners();
+		}
 
 		// Visualize Results
 		Visualizer v = GGVisualizer.getVisualizer(6, 6);
