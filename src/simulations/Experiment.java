@@ -58,7 +58,7 @@ import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
  * @author betsy hilliard betsy@cs.brown.edu
  *
  */
-public class ExperimentRunner {
+public class Experiment {
 
 	// Agent parameters
 	// Map from agent name (specific to location in game) to level to policy
@@ -87,11 +87,7 @@ public class ExperimentRunner {
 	private final double DISCOUNT_FACTOR = 0.99, LEARNING_RATE = 0.01;
 	private final int TIMEOUT = 100;
 
-	public enum Level0Type {
-		RANDOM, Q, NASH_CD, NASH_B
-	}
-
-	public ExperimentRunner(String gameFile, int kLevel, double stepCost,
+	public Experiment(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoOp, double noopCost, double reward,
 			double tau, boolean runValueIteration,
 			boolean runStochasticPolicyPlanner, int numTrials,
@@ -652,12 +648,14 @@ public class ExperimentRunner {
 
 	protected void qMetaString() {
 		this.metaText = "Q-LEARNING DATA \n -----------------------------------";
-		this.metaText += "Number of learning episodes: " + this.numLearningEpisodes
-				+ '\n';
+		this.metaText += "Number of learning episodes: "
+				+ this.numLearningEpisodes + '\n';
 		this.metaText += "Discount factor: " + this.DISCOUNT_FACTOR + '\n';
 		this.metaText += "Learning rate: " + this.LEARNING_RATE + '\n';
-		this.metaText += "Optimistic Initialization: " + this.optimisticInit + '\n';
-		this.metaText += "Boltzmann Exploration: " + this.boltzmannExplore + '\n';
+		this.metaText += "Optimistic Initialization: " + this.optimisticInit
+				+ '\n';
+		this.metaText += "Boltzmann Exploration: " + this.boltzmannExplore
+				+ '\n';
 		if (this.boltzmannExplore)
 			this.metaText += "Boltzmann Temperature: " + this.temp + '\n';
 		this.metaText += '\n';
@@ -744,7 +742,7 @@ public class ExperimentRunner {
 		// Execution timer
 		long startTime = System.currentTimeMillis();
 
-		ExperimentRunner runner = new ExperimentRunner(file, kLevel, stepCost,
+		Experiment runner = new Experiment(file, kLevel, stepCost,
 				incurCostOnNoop, noopCost, reward, tau, runValueIteration,
 				runStochasticPolicyPlanner, numTrials, noopAllowed);
 
@@ -756,7 +754,6 @@ public class ExperimentRunner {
 			// Run Q-Learners
 			// runner.runQVsCooperator(numLearningEpisodes);
 			runner.runQLearners(numLearningEpisodes);
-			runner.writeMetaDataForQLearners();
 		}
 
 		// Visualize Results
