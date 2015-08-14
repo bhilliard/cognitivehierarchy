@@ -26,7 +26,8 @@ import burlap.oomdp.stochasticgames.SGDomain;
 
 public class MetricPlotter {
 
-	protected ArrayList<GameAnalysis> gas;
+	protected ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>(),
+			gasL = new ArrayList<GameAnalysis>();
 	protected String inDir, outDir;
 	protected SGDomain domain = (SGDomain) new GridGame().generateDomain();
 	protected int queueSize = 1;
@@ -39,45 +40,43 @@ public class MetricPlotter {
 		getGames();
 	}
 
-	public MetricPlotter(ArrayList<GameAnalysis> gas, String outDir) {
-		this.gas = gas;
-		this.outDir = outDir;
-	}
-
 	public MetricPlotter(String inDir, String outDir, int avgWindow) {
 		this(inDir, outDir);
 		this.queueSize = avgWindow;
 	}
-
-	public MetricPlotter(ArrayList<GameAnalysis> gas, String outDir,
-			int avgWindow) {
-		this(gas, outDir);
-		this.queueSize = avgWindow;
-	}
-
+	
 	protected void getGames() {
 
 		File[] matchFiles = new File(this.inDir).listFiles();
 		StateParser sp = new StateJSONParser(this.domain);
-		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
 
 		for (File match : matchFiles) {
-			if (match.isDirectory() && match.getName().contains("earning")) {
+			if (match.isDirectory()) {
 				for (File trial : match.listFiles()) {
 					GameAnalysis ga = GameAnalysis.parseFileIntoGA(this.inDir
 							+ match.getName() + "/" + trial.getName(),
 							this.domain, sp);
-					gas.add(ga);
+					if (match.getName().contains("earning"))
+						this.gasL.add(ga);
+					else
+						this.gas.add(ga);
 				}
 			}
 		}
-		this.gas = gas;
+	}
+	
+	public void plotLearningReward(){
+		plotReward(gasL, "Learning");
+	}
+	
+	public void plotTrialReward(){
+		plotReward(gas, "Trial");
 	}
 
-	public void plotReward() {
+	protected void plotReward(ArrayList<GameAnalysis> gas, String title) {
 		XYPlot plot = new XYPlot();
 
-		String title = "Reward";
+		title = "Reward-"+title;
 
 		XYSeriesCollection dataset0 = new XYSeriesCollection();
 		XYSeriesCollection dataset1 = new XYSeriesCollection();
@@ -94,7 +93,7 @@ public class MetricPlotter {
 		double agent0Sum, agent1Sum, agent0Avg, agent1Avg;
 		LinkedList<Double> agent0q = new LinkedList<Double>(), agent1q = new LinkedList<Double>();
 		for (int i = 0; i < gas.size(); i++) {
-			List<Map<String, Double>> rewards = this.gas.get(i)
+			List<Map<String, Double>> rewards = gas.get(i)
 					.getJointRewards();
 			agent0Sum = 0;
 			agent1Sum = 0;
@@ -164,6 +163,7 @@ public class MetricPlotter {
 
 	public static void main(String[] args) {
 		MetricPlotter plot = new MetricPlotter("../2015_08_12_03_19_52", "");
-		plot.plotReward();
+		plot.plotTrialReward();
+		plot.plotLearningReward();
 	}
 }

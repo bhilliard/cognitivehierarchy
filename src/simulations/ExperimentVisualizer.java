@@ -20,21 +20,25 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 	String dirName;
 
 	public ExperimentVisualizer(Visualizer vis, SGDomain domain, String dirName) {
-		super(vis, domain, getGames(domain, dirName));
+		this(vis,domain,dirName, false);
+	}
+
+	public ExperimentVisualizer(Visualizer vis, SGDomain domain, String dirName, boolean showLearning) {
+		super(vis, domain, getGames(domain, dirName, showLearning));
 		this.dirName = dirName;
 		setEpisodeNames();
 		this.initGUI();
 	}
 
 	protected static ArrayList<GameAnalysis> getGames(SGDomain domain,
-			String dirName) {
+			String dirName, boolean showLearning) {
 
 		File[] matchFiles = new File(dirName).listFiles();
 		StateParser sp = new StateJSONParser(domain);
 		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
 
 		for (File match : matchFiles) {
-			if (match.isDirectory()) {
+			if (match.isDirectory() &&( showLearning == match.getName().contains("earning"))) {
 				for (File trial : match.listFiles()) {
 					GameAnalysis ga = GameAnalysis.parseFileIntoGA(dirName
 							+ match.getName() + "/" + trial.getName(), domain,
@@ -66,7 +70,7 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 		this.episodesListModel = new DefaultListModel();
 
 		for (File match : matchFiles) {
-			if (match.isDirectory() && match.getName().contains("earning")) {
+			if (match.isDirectory()) {
 				for (File trial : match.listFiles()) {
 					episodesListModel.addElement(trial.getName());
 				}
@@ -80,5 +84,7 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 			dirName += "/";
 		new ExperimentVisualizer(GGVisualizer.getVisualizer(6, 6),
 				(SGDomain) new GridGame().generateDomain(), dirName);
+//		new ExperimentVisualizer(GGVisualizer.getVisualizer(6, 6),
+//				(SGDomain) new GridGame().generateDomain(), dirName, true);
 	}
 }

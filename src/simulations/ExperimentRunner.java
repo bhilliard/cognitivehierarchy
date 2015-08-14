@@ -82,6 +82,8 @@ public class ExperimentRunner {
 	private boolean optimisticInit, boltzmannExplore, saveLearning;
 	private double temp;
 
+	private String metaText;
+
 	private final double DISCOUNT_FACTOR = 0.99, LEARNING_RATE = 0.01;
 	private final int TIMEOUT = 100;
 
@@ -115,10 +117,13 @@ public class ExperimentRunner {
 		}
 		this.solvedAgentPolicies = new HashMap<String, Map<Integer, Policy>>();
 	}
-	public List<GameAnalysis> runKLevelExperiment(Level0Type level0Type, int level0LearningEpisodes) {
+
+	public List<GameAnalysis> runKLevelExperiment(Level0Type level0Type,
+			int level0LearningEpisodes) {
 		this.numLearningEpisodes = level0LearningEpisodes;
 		return runKLevelExperiment(level0Type);
 	}
+
 	/**
 	 * runExperiment runs
 	 * 
@@ -135,9 +140,9 @@ public class ExperimentRunner {
 		StateHashFactory hashFactory = new DiscreteStateHashFactory();
 
 		Date date = new Date();
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 		String outDir = "../" + ft.format(date) + "/";
-		
+
 		// loop over all lower levels to learn their policies
 		for (int k = 0; k < kLevel; k++) {
 
@@ -170,7 +175,8 @@ public class ExperimentRunner {
 
 				// if level 0, store policy because it's the random agent
 				if (k == 0) {
-					lowerPolicy = generateLevel0Policy(level0Type, opponentName, outDir);
+					lowerPolicy = generateLevel0Policy(level0Type,
+							opponentName, outDir);
 					Map<Integer, Policy> agentPolicies;
 					// if no policies for this name exist, store policy
 					if (!solvedAgentPolicies.containsKey(opponentName)) {
@@ -195,8 +201,8 @@ public class ExperimentRunner {
 				Map<String, Map<Integer, Policy>> allOtherAgentPolicies = new HashMap<String, Map<Integer, Policy>>();
 				HashMap<Integer, Policy> levelMap = new HashMap<Integer, Policy>();
 				for (int lev = 0; lev <= k; lev++) {
-					levelMap.put(lev,
-							solvedAgentPolicies.get(opponentName).get(lev));
+					levelMap.put(lev, solvedAgentPolicies.get(opponentName)
+							.get(lev));
 				}
 
 				// this is the policies we want to use for learning for this
@@ -229,7 +235,8 @@ public class ExperimentRunner {
 			}
 		}
 
-		this.outFile = runCompetition(solvedAgentPolicies, kLevel, numTrials, outDir);
+		this.outFile = runCompetition(solvedAgentPolicies, kLevel, numTrials,
+				outDir);
 		return gas;
 	}
 
@@ -259,13 +266,15 @@ public class ExperimentRunner {
 		}
 	}
 
-	private Policy generateLevel0Policy(Level0Type type, String opponentName, String outDir) {
+	private Policy generateLevel0Policy(Level0Type type, String opponentName,
+			String outDir) {
 		switch (type) {
 		case RANDOM:
 			return new RandomSingleAgentPolicy(opponentName,
 					domain.getSingleActions());
 		case Q:
-			Map<String, Policy> policyMap = runLearning(this.numLearningEpisodes, outDir);
+			Map<String, Policy> policyMap = runLearning(
+					this.numLearningEpisodes, outDir);
 			return policyMap.get(opponentName);
 		case NASH_B:
 			break;
@@ -298,7 +307,6 @@ public class ExperimentRunner {
 
 		rowAgent = policyMap.get("agent0");
 		colAgent = policyMap.get("agent1");
-
 
 		for (int t = 0; t < numRuns; t++) {
 			for (int i = 0; i < rowAgent.size(); i++) {
@@ -430,7 +438,7 @@ public class ExperimentRunner {
 		GameAnalysis ga;
 
 		Date date = new Date();
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 		String outDir = "../" + ft.format(date) + "/";
 
 		Map<String, Policy> policyMap = runLearning(numEpisodes, outDir);
@@ -459,23 +467,6 @@ public class ExperimentRunner {
 			ga = this.gameWorld.runGame(TIMEOUT);
 
 			gas.add(ga);
-
-			// List<Map<String, Double>> jointRewards = ga.getJointRewards();
-			//
-			// for (Map<String, Double> rewards : jointRewards) {
-			// for (String agentKey : rewards.keySet()) {
-			// if (agentReward.containsKey(agentKey)) {
-			// agentReward.put(agentKey, agentReward.get(agentKey)
-			// + rewards.get(agentKey));
-			// } else {
-			// agentReward.put(agentKey, rewards.get(agentKey));
-			// }
-			// }
-			// }
-			// for (String keyName : agentReward.keySet()) {
-			// agentReward.put(keyName, agentReward.get(keyName)
-			// / (1.0 * this.numTrials));
-			// }
 
 			System.out.println(ga.getJointRewards());
 
@@ -520,7 +511,7 @@ public class ExperimentRunner {
 		}
 
 		Date date = new Date();
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_hh_mm_ss");
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 		String outDir = "../" + ft.format(date) + "/";
 
 		// Execution Phase
@@ -579,52 +570,12 @@ public class ExperimentRunner {
 	}
 
 	public void writeMetaData() {
-		PrintWriter writer, writerGreen, writerBlue, current;
+		PrintWriter writer;
 		try {
 			writer = new PrintWriter(outFile + "meta.txt", "UTF-8");
-			writerGreen = new PrintWriter(outFile + "scoresGreen", "UTF-8");
-			writerBlue = new PrintWriter(outFile + "scoresBlue", "UTF-8");
-			String noop;
-			if (this.incurCostOnNoop)
-				noop = Double.toString(this.noopCost);
-			else
-				noop = "0.0";
-
-			writer.println("Game File/Type: " + this.gameFile);
-			writer.println("k-Level: " + this.kLevel);
-			writer.println("Tau: " + this.tau);
-			writer.println("Reward Value: " + this.reward);
-			writer.println("Using VI: " + this.runValueIteration);
-			writer.println("Using Stochastic Policies: "
-					+ this.runStochasticPolicyPlanner);
-			writer.println("Step Cost: " + this.stepCost);
-			writer.println("Noop: " + this.noopAllowed);
-			if (this.noopAllowed)
-				writer.println("Noop Cost: " + noop);
-			writer.println("Number of trials: " + this.numTrials);
-			writer.println("Game timeout: " + this.TIMEOUT + " moves");
-			writer.println("Score Matrices:");
-			for (int m = 0; m < 2; m++) {
-				if (m == 0) {
-					writer.println("Green Agent:");
-					current = writerGreen;
-				} else {
-					writer.println("Blue Agent:");
-					current = writerBlue;
-				}
-				for (int i = 0; i < this.scores.length; i++) {
-					writer.print(i + ": ");
-					for (int j = 0; j < this.scores.length; j++) {
-						writer.print(this.scores[i][j][m] + " ");
-						current.print(this.scores[i][j][m] + " ");
-					}
-					writer.println();
-				}
-				writer.println();
-			}
+			writer.print(this.metaText);
 			writer.close();
-			writerGreen.close();
-			writerBlue.close();
+			this.metaText = null;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
@@ -632,39 +583,84 @@ public class ExperimentRunner {
 		}
 	}
 
-	public void writeMetaDataForQLearners() {
-		PrintWriter writer;
+	protected void gameMetaString() {
+		String noop;
+
+		if (this.incurCostOnNoop)
+			noop = Double.toString(this.noopCost);
+		else
+			noop = "0.0";
+		this.metaText = "GAME DATA \n -----------------------------------";
+		this.metaText += "Game File/Type: " + this.gameFile + '\n';
+		this.metaText += "Reward Value: " + this.reward + '\n';
+		this.metaText += "Step Cost: " + this.stepCost + '\n';
+		this.metaText += "Noop Allowed: " + this.noopAllowed + '\n';
+		if (this.noopAllowed)
+			this.metaText += "Noop Cost: " + noop + '\n';
+		this.metaText += "Game timeout: " + this.TIMEOUT + " moves" + '\n';
+		this.metaText += '\n';
+	}
+
+	protected void experimentMetaString() {
+		this.metaText = "EXPERIMENT DATA \n -----------------------------------";
+		this.metaText = "Number of trials: " + this.numTrials + '\n';
+		this.metaText += +'\n';
+	}
+
+	protected void kLevelMetaString() {
+		PrintWriter current, writerBlue, writerGreen;
+		this.metaText = "K-LEVEL DATA \n -----------------------------------";
+
 		try {
-			writer = new PrintWriter(outFile + "meta.txt", "UTF-8");
-			String noop;
-			if (this.incurCostOnNoop)
-				noop = Double.toString(this.noopCost);
-			else
-				noop = "0.0";
+			writerBlue = new PrintWriter(outFile + "scoresBlue", "UTF-8");
+			writerGreen = new PrintWriter(outFile + "scoresGreen", "UTF-8");
 
-			writer.println("Game File/Type: " + this.gameFile);
-			writer.println("Reward Value: " + this.reward);
-			writer.println("Step Cost: " + this.stepCost);
-			writer.println("Noop: " + this.noopAllowed);
-			if (this.noopAllowed)
-				writer.println("Noop Cost: " + noop);
-			writer.println("Number of learning episodes: "
-					+ this.numLearningEpisodes);
-			writer.println("Number of execution trials: " + this.numTrials);
-			writer.println("Discount factor: " + this.DISCOUNT_FACTOR);
-			writer.println("Learning rate: " + this.LEARNING_RATE);
-			writer.println("Optimistic: " + this.optimisticInit);
-			writer.println("Boltzmann Exploration: " + this.boltzmannExplore);
-			if (this.boltzmannExplore)
-				writer.println("Boltzmann Temperature: " + this.temp);
-			writer.println("Game timeout: " + this.TIMEOUT + " moves");
+			this.metaText += "k-Level: " + this.kLevel + '\n';
+			this.metaText += "Tau: " + this.tau + '\n';
+			this.metaText += "Using VI: " + this.runValueIteration + '\n';
+			this.metaText += "Using Stochastic Policies: "
+					+ this.runStochasticPolicyPlanner + '\n';
+			this.metaText += "Score Matrices:" + '\n';
+			for (int m = 0; m < 2; m++) {
+				if (m == 0) {
+					this.metaText += "Green Agent:" + '\n';
+					current = writerGreen;
+				} else {
+					this.metaText += "Blue Agent:" + '\n';
+					current = writerBlue;
+				}
+				for (int i = 0; i < this.scores.length; i++) {
+					this.metaText += i + ": ";
+					for (int j = 0; j < this.scores.length; j++) {
+						this.metaText += this.scores[i][j][m] + " ";
+						current.print(this.scores[i][j][m] + " ");
+					}
+					this.metaText += '\n';
+				}
+				this.metaText += '\n';
+			}
+			writerBlue.close();
+			writerGreen.close();
+			this.metaText += '\n';
 
-			writer.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
+	}
+
+	protected void qMetaString() {
+		this.metaText = "Q-LEARNING DATA \n -----------------------------------";
+		this.metaText += "Number of learning episodes: " + this.numLearningEpisodes
+				+ '\n';
+		this.metaText += "Discount factor: " + this.DISCOUNT_FACTOR + '\n';
+		this.metaText += "Learning rate: " + this.LEARNING_RATE + '\n';
+		this.metaText += "Optimistic Initialization: " + this.optimisticInit + '\n';
+		this.metaText += "Boltzmann Exploration: " + this.boltzmannExplore + '\n';
+		if (this.boltzmannExplore)
+			this.metaText += "Boltzmann Temperature: " + this.temp + '\n';
+		this.metaText += '\n';
 	}
 
 	public void createWorld() {
