@@ -70,6 +70,7 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 		this.episodesListModel = new DefaultListModel();
 
 		for (File match : matchFiles) {
+
 			if (match.isDirectory()) {
 				for (File trial : match.listFiles()) {
 					episodesListModel.addElement(trial.getName());
