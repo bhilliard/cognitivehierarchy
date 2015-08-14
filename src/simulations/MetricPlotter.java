@@ -150,6 +150,69 @@ public class MetricPlotter {
 
 		showPlot(plot, title);
 	}
+	
+	public void plotNumSteps() {
+		XYPlot plot = new XYPlot();
+
+		String title = "Average Number of Steps in Game";
+
+		XYSeriesCollection dataset0 = new XYSeriesCollection();
+
+		XYLineAndShapeRenderer renderer0 = new XYLineAndShapeRenderer();
+		
+		NumberAxis domain = new NumberAxis("x");
+		NumberAxis range = new NumberAxis("y");
+
+		XYSeries steps = new XYSeries("Num Steps");
+		
+
+		double avgNumTimeSteps;
+		double numTimeSteps;
+		LinkedList<Double> q = new LinkedList<Double>();
+		for (int i = 0; i < gas.size(); i++) {
+			
+			numTimeSteps = this.gas.get(i).numTimeSteps();
+			
+
+			if (q.size() == this.queueSize) {
+				q.removeFirst();
+			}
+
+			q.addLast(numTimeSteps);
+
+			if (q.size() == queueSize) {
+				avgNumTimeSteps = 0;
+				for (int j = 0; j < queueSize; j++) {
+					avgNumTimeSteps += q.get(j);
+				}
+				avgNumTimeSteps /= queueSize;
+				
+				steps.add(i, avgNumTimeSteps);
+				
+			}
+		}
+
+		dataset0.addSeries(steps);
+		
+		plot.setDataset(0, dataset0);
+
+		plot.setRenderer(0, renderer0);
+		
+		renderer0.setSeriesPaint(0, Color.CYAN);
+		
+		renderer0.setBaseShapesVisible(false);
+		
+		plot.setDomainAxis(0, domain);
+		plot.setRangeAxis(0, range);
+
+		plot.mapDatasetToDomainAxis(0, 0);
+		plot.mapDatasetToDomainAxis(1, 0);
+
+		plot.mapDatasetToRangeAxis(0, 0);
+		plot.mapDatasetToRangeAxis(1, 0);
+
+		showPlot(plot, title);
+	}
 
 	public void showPlot(XYPlot plot, String title) {
 
@@ -162,8 +225,10 @@ public class MetricPlotter {
 	}
 
 	public static void main(String[] args) {
+
 		MetricPlotter plot = new MetricPlotter("../2015_08_12_03_19_52", "");
 		plot.plotTrialReward();
 		plot.plotLearningReward();
+
 	}
 }
