@@ -1,5 +1,7 @@
 package simulations;
 
+import java.awt.Color;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -9,6 +11,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import simulations.ExperimentRunner.Level0Type;
 
 import com.sun.glass.ui.Window.Level;
 
@@ -36,6 +40,7 @@ import burlap.behavior.stochasticgame.mavaluefunction.backupOperators.MinMaxQ;
 import burlap.behavior.stochasticgame.saconversion.RandomSingleAgentPolicy;
 import burlap.behavior.stochasticgame.saconversion.SingleToMultiPolicy;
 import burlap.behavior.stochasticgame.solvers.CorrelatedEquilibriumSolver.CorrelatedEquilibriumObjective;
+import burlap.domain.singleagent.gridworld.GridWorldDomain;
 import burlap.domain.stochasticgames.gridgame.GGVisualizer;
 import burlap.domain.stochasticgames.gridgame.GridGame;
 import burlap.domain.stochasticgames.gridgame.GridGameStandardMechanics;
@@ -43,6 +48,7 @@ import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.auxiliary.common.StateJSONParser;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.singleagent.Action;
 import burlap.oomdp.stochasticgames.Agent;
 import burlap.oomdp.stochasticgames.AgentType;
 import burlap.oomdp.stochasticgames.JointActionModel;
@@ -52,7 +58,14 @@ import burlap.oomdp.stochasticgames.SGStateGenerator;
 import burlap.oomdp.stochasticgames.SingleAction;
 import burlap.oomdp.stochasticgames.World;
 import burlap.oomdp.stochasticgames.common.ConstantSGStateGenerator;
+import burlap.oomdp.stochasticgames.explorers.SGVisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
+import burlap.behavior.singleagent.auxiliary.valuefunctionvis.ValueFunctionVisualizerGUI;
+import burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.ArrowActionGlyph;
+import burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.LandmarkColorBlendInterpolation;
+import burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.PolicyGlyphPainter2D;
+import burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.StateValuePainter2D;
+import burlap.behavior.singleagent.auxiliary.valuefunctionvis.common.PolicyGlyphPainter2D.PolicyGlyphRenderStyle;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
 import burlap.behavior.singleagent.planning.commonpolicies.BoltzmannQPolicy;
 import burlap.behavior.singleagent.planning.commonpolicies.CachedPolicy;
@@ -89,11 +102,23 @@ public class Experiment {
 	private double[][][] scores;
 	private boolean optimisticInit, boltzmannExplore, saveLearning;
 	private double temp;
+	private String outDirRoot = "../";
 
-	private String metaText;
+	private String metaText = "";
 
 	private final double DISCOUNT_FACTOR = 0.99, LEARNING_RATE = 0.01;
 	private final int TIMEOUT = 100;
+
+	public Experiment(String gameFile, int kLevel, double stepCost,
+			boolean incurCostOnNoOp, double noopCost, double reward,
+			double tau, boolean runValueIteration,
+			boolean runStochasticPolicyPlanner, int numTrials,
+			boolean noopAllowed, String outDirRoot) {
+		this(gameFile, kLevel, stepCost, incurCostOnNoOp, noopCost, reward,
+				tau, runValueIteration, runStochasticPolicyPlanner, numTrials,
+				noopAllowed);
+		this.outDirRoot = outDirRoot;
+	}
 
 	public Experiment(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoOp, double noopCost, double reward,
@@ -143,9 +168,10 @@ public class Experiment {
 
 		StateHashFactory hashFactory = new DiscreteStateHashFactory();
 
-		Date date = new Date();
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-		String outDir = "../" + ft.format(date) + "/";
+		String outDir = makeOutDir();
+
+		experimentMetaString();
+		gameMetaString();
 
 		// loop over all lower levels to learn their policies
 		for (int k = 0; k < kLevel; k++) {
@@ -241,6 +267,9 @@ public class Experiment {
 
 		this.outFile = runCompetition(solvedAgentPolicies, kLevel, numTrials,
 				outDir);
+
+		kLevelMetaString();
+		writeMetaData();
 		return gas;
 	}
 
@@ -277,6 +306,7 @@ public class Experiment {
 			return new RandomSingleAgentPolicy(opponentName,
 					domain.getSingleActions());
 		case Q:
+			qMetaString();
 			Map<String, Policy> policyMap = runLearning(
 					this.numLearningEpisodes, outDir);
 			return policyMap.get(opponentName);
@@ -347,10 +377,10 @@ public class Experiment {
 								agentReward.put(
 										agentKey,
 										agentReward.get(agentKey)
-										+ rewards.get(agentKey));
+												+ rewards.get(agentKey));
 							} else {
 								agentReward
-								.put(agentKey, rewards.get(agentKey));
+										.put(agentKey, rewards.get(agentKey));
 							}
 						}
 					}
@@ -441,9 +471,11 @@ public class Experiment {
 		StateParser sp = new StateJSONParser(domain);
 		GameAnalysis ga;
 
-		Date date = new Date();
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-		String outDir = "../" + ft.format(date) + "/";
+		String outDir = makeOutDir();
+
+		experimentMetaString();
+		gameMetaString();
+		qMetaString();
 
 		Map<String, Policy> policyMap = runLearning(numEpisodes, outDir);
 
@@ -480,8 +512,8 @@ public class Experiment {
 			ga.writeToFile(outFile, sp);
 
 		}
-
 		this.outFile = outDir;
+		writeMetaData();
 		return outDir;
 	}
 
@@ -489,46 +521,50 @@ public class Experiment {
 		// Map<String, Double> agentReward = new HashMap<String, Double>();
 		this.saveLearning = true;
 		SGBackupOperator operator;
-		if(operatorType.compareToIgnoreCase("coco")==0){
+		if (operatorType.compareToIgnoreCase("coco") == 0) {
 			operator = new CoCoQ();
-		}else if(operatorType.compareToIgnoreCase("max")==0){
+		} else if (operatorType.compareToIgnoreCase("max") == 0) {
 			operator = new MaxQ();
-		}else if(operatorType.compareToIgnoreCase("minMax")==0){
+		} else if (operatorType.compareToIgnoreCase("minMax") == 0) {
 			operator = new MinMaxQ();
-		}else if(operatorType.compareToIgnoreCase("correlated_egalitarian")==0){
-			operator = new CorrelatedQ(CorrelatedEquilibriumObjective.EGALITARIAN);
-		}else if(operatorType.compareToIgnoreCase("correlated_libertarian")==0){
-			operator = new CorrelatedQ(CorrelatedEquilibriumObjective.LIBERTARIAN);
-		}else if(operatorType.compareToIgnoreCase("correlated_republican")==0){
-			operator = new CorrelatedQ(CorrelatedEquilibriumObjective.REPUBLICAN);
-		}else if(operatorType.compareToIgnoreCase("correlated_utilitarian")==0){
-			operator = new CorrelatedQ(CorrelatedEquilibriumObjective.UTILITARIAN);
-		}else{
+		} else if (operatorType.compareToIgnoreCase("correlated_egalitarian") == 0) {
+			operator = new CorrelatedQ(
+					CorrelatedEquilibriumObjective.EGALITARIAN);
+		} else if (operatorType.compareToIgnoreCase("correlated_libertarian") == 0) {
+			operator = new CorrelatedQ(
+					CorrelatedEquilibriumObjective.LIBERTARIAN);
+		} else if (operatorType.compareToIgnoreCase("correlated_republican") == 0) {
+			operator = new CorrelatedQ(
+					CorrelatedEquilibriumObjective.REPUBLICAN);
+		} else if (operatorType.compareToIgnoreCase("correlated_utilitarian") == 0) {
+			operator = new CorrelatedQ(
+					CorrelatedEquilibriumObjective.UTILITARIAN);
+		} else {
 			operator = new MaxQ();
 		}
-
 
 		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
 		StateParser sp = new StateJSONParser(domain);
 		GameAnalysis ga;
 
-		Date date = new Date();
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-		String outDir = "../" + ft.format(date) + "/";
+		String outDir = makeOutDir();
 
-		MultiAgentQLearning maQLearning1 = new MultiAgentQLearning(domain, DISCOUNT_FACTOR, 
-				LEARNING_RATE, new DiscreteStateHashFactory(), 0, operator, true);
+		MultiAgentQLearning maQLearning1 = new MultiAgentQLearning(domain,
+				DISCOUNT_FACTOR, LEARNING_RATE, new DiscreteStateHashFactory(),
+				0, operator, true);
 
-		MultiAgentQLearning maQLearning2 = new MultiAgentQLearning(domain, DISCOUNT_FACTOR, 
-				LEARNING_RATE, new DiscreteStateHashFactory(), 0, operator, true);
-
+		MultiAgentQLearning maQLearning2 = new MultiAgentQLearning(domain,
+				DISCOUNT_FACTOR, LEARNING_RATE, new DiscreteStateHashFactory(),
+				0, operator, true);
 
 		// Learning Phase
 		for (int i = 0; i < numEpisodes; i++) {
 			createWorld();
-			maQLearning1.joinWorld(this.gameWorld, new AgentType(GridGame.CLASSAGENT,
-					this.domain.getObjectClass(GridGame.CLASSAGENT),
-					this.domain.getSingleActions()));
+			maQLearning1.joinWorld(
+					this.gameWorld,
+					new AgentType(GridGame.CLASSAGENT, this.domain
+							.getObjectClass(GridGame.CLASSAGENT), this.domain
+							.getSingleActions()));
 			maQLearning2.joinWorld(
 					this.gameWorld,
 					new AgentType(GridGame.CLASSAGENT, this.domain
@@ -537,20 +573,18 @@ public class Experiment {
 			ga = this.gameWorld.runGame(TIMEOUT);
 
 			if (saveLearning) {
-				String outFile = outDir + "MALearning/"
-						+ "_Trial_" + i;
+				String outFile = outDir + "MALearning/" + "_Trial_" + i;
 				ga.writeToFile(outFile, sp);
 			}
 
 		}
-
-
 
 		this.outFile = outDir;
 		return outDir;
 	}
 
 	public String runQVsCooperator(int numEpisodes) {
+
 		this.numLearningEpisodes = numEpisodes;
 		this.saveLearning = true;
 		SGNaiveQLAgent opponent;
@@ -558,18 +592,21 @@ public class Experiment {
 		// Map<String, Double> agentReward = new HashMap<String, Double>();
 		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
 
-		//SimpleCooperativeStrategy agent = new SimpleCooperativeStrategy(domain);
+		// SimpleCooperativeStrategy agent = new
+		// SimpleCooperativeStrategy(domain);
 		BelligerentAgent agent = new BelligerentAgent(domain);
 		opponent = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
 				this.LEARNING_RATE, hashFactory);
 
 		StateParser sp = new StateJSONParser(domain);
 		GameAnalysis ga;
-		
-		Date date = new Date();
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-		String outDir = "../" + ft.format(date) + "/";
-		
+
+		String outDir = makeOutDir();
+
+		experimentMetaString();
+		gameMetaString();
+		qMetaString();
+
 		// Learning Phase
 		for (int i = 0; i < numEpisodes; i++) {
 
@@ -587,8 +624,8 @@ public class Experiment {
 			ga = this.gameWorld.runGame(TIMEOUT);
 
 			if (saveLearning) {
-				String outFile = outDir + "Green_CD" + "_Blue_Q" + "_Learning/" + "GCD" + "BQ"
-						+ "_Episode_" + i;
+				String outFile = outDir + "Green_CD" + "_Blue_Q" + "_Learning/"
+						+ "GCD" + "BQ" + "_Episode_" + i;
 				ga.writeToFile(outFile, sp);
 			}
 
@@ -619,17 +656,15 @@ public class Experiment {
 
 			gas.add(ga);
 
-
-			
 			System.out.println(ga.getJointRewards());
-			String outFile = outDir + "Green_CD" + "_Blue_Q" + "/" + "GCD" + "BQ"
-					+ "_Trial_" + i;
+			String outFile = outDir + "Green_CD" + "_Blue_Q" + "/" + "GCD"
+					+ "BQ" + "_Trial_" + i;
 
 			ga.writeToFile(outFile, sp);
 
 		}
-
 		this.outFile = outDir;
+		writeMetaData();
 		return outDir;
 	}
 
@@ -654,7 +689,7 @@ public class Experiment {
 			noop = Double.toString(this.noopCost);
 		else
 			noop = "0.0";
-		this.metaText = "GAME DATA \n -----------------------------------";
+		this.metaText += "GAME DATA \n -----------------------------------\n";
 		this.metaText += "Game File/Type: " + this.gameFile + '\n';
 		this.metaText += "Reward Value: " + this.reward + '\n';
 		this.metaText += "Step Cost: " + this.stepCost + '\n';
@@ -666,14 +701,14 @@ public class Experiment {
 	}
 
 	protected void experimentMetaString() {
-		this.metaText = "EXPERIMENT DATA \n -----------------------------------";
-		this.metaText = "Number of trials: " + this.numTrials + '\n';
+		this.metaText += "EXPERIMENT DATA \n-----------------------------------\n";
+		this.metaText += "Number of trials: " + this.numTrials + '\n';
 		this.metaText += +'\n';
 	}
 
 	protected void kLevelMetaString() {
 		PrintWriter current, writerBlue, writerGreen;
-		this.metaText = "K-LEVEL DATA \n -----------------------------------";
+		this.metaText += "K-LEVEL DATA \n-----------------------------------\n";
 
 		try {
 			writerBlue = new PrintWriter(outFile + "scoresBlue", "UTF-8");
@@ -715,7 +750,7 @@ public class Experiment {
 	}
 
 	protected void qMetaString() {
-		this.metaText = "Q-LEARNING DATA \n -----------------------------------";
+		this.metaText += "Q-LEARNING DATA \n-----------------------------------\n";
 		this.metaText += "Number of learning episodes: "
 				+ this.numLearningEpisodes + '\n';
 		this.metaText += "Discount factor: " + this.DISCOUNT_FACTOR + '\n';
@@ -769,6 +804,15 @@ public class Experiment {
 		}
 	}
 
+	private String makeOutDir() {
+		Date date = new Date();
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+		String outDir = this.outDirRoot + ft.format(date) + "/";
+		File dirFile = new File(outDir);
+		dirFile.mkdir();
+		return outDir;
+	}
+
 	public static void main(String[] args) {
 
 		double reward = 500.0; // Set this to set the rewards for goals.
@@ -779,7 +823,7 @@ public class Experiment {
 
 		boolean incurCostOnNoop = true;
 		boolean noopAllowed = true;
-		int kLevel = 5; // This is the level the "smartest" agent will be.
+		int kLevel = 2; // This is the level the "smartest" agent will be.
 		int tau = 2; // Parameter defines the distribution over lower levels
 		// that the agent assumes.
 
@@ -817,10 +861,9 @@ public class Experiment {
 		// Run k-Level
 		if (runKNotQTests) {
 			runner.runKLevelExperiment(Level0Type.RANDOM, numLearningEpisodes);
-			runner.writeMetaData();
 		} else {
 			// Run Q-Learners
-			//runner.runQVsCooperator(numLearningEpisodes);
+			// runner.runQVsCooperator(numLearningEpisodes);
 			runner.runQLearners(numLearningEpisodes);
 
 		}
@@ -828,6 +871,45 @@ public class Experiment {
 		// Visualize Results
 		Visualizer v = GGVisualizer.getVisualizer(6, 6);
 		new ExperimentVisualizer(v, runner.getDomain(), runner.outFile);
+
+		// Attempting to get visplorer to work:
+		// ArrayList<State> states = new ArrayList<State>();
+		// states.add(runner.gameWorld.startingState());
+		// LandmarkColorBlendInterpolation rb = new
+		// LandmarkColorBlendInterpolation();
+		// rb.addNextLandMark(0., Color.RED);
+		// rb.addNextLandMark(1., Color.BLUE);
+		// StateValuePainter2D svp = new StateValuePainter2D(rb);
+		// svp.setXYAttByObjectClass(GridWorldDomain.CLASSAGENT,
+		// GridWorldDomain.ATTX, GridWorldDomain.CLASSAGENT,
+		// GridWorldDomain.ATTY);
+		// SGNaiveQLAgent planner = new SGNaiveQLAgent(runner.domain, 0.99, 0,
+		// new DiscreteStateHashFactory());
+		// Policy policy =
+		// runner.solvedAgentPolicies.get(runner.solvedAgentPolicies.keySet().toArray()[0]).get(1);
+		// planner.setStrategy(policy);
+		// ValueFunctionVisualizerGUI gui = new
+		// ValueFunctionVisualizerGUI(states,
+		// svp, planner);
+		//
+		// PolicyGlyphPainter2D spp = new PolicyGlyphPainter2D();
+		// spp.setXYAttByObjectClass(GridWorldDomain.CLASSAGENT,
+		// GridWorldDomain.ATTX, GridWorldDomain.CLASSAGENT,
+		// GridWorldDomain.ATTY);
+		// spp.setActionNameGlyphPainter(GridWorldDomain.ACTIONNORTH,
+		// new ArrowActionGlyph(0));
+		// spp.setActionNameGlyphPainter(GridWorldDomain.ACTIONSOUTH,
+		// new ArrowActionGlyph(1));
+		// spp.setActionNameGlyphPainter(GridWorldDomain.ACTIONEAST,
+		// new ArrowActionGlyph(2));
+		// spp.setActionNameGlyphPainter(GridWorldDomain.ACTIONWEST,
+		// new ArrowActionGlyph(3));
+		// spp.setRenderStyle(PolicyGlyphRenderStyle.DISTSCALED);
+		//
+		// gui.setSpp(spp);
+		// gui.setPolicy(policy);
+		// gui.setBgColor(null);
+		// gui.initGUI();
 
 		long endTime = System.currentTimeMillis();
 		long totalTime = endTime - startTime;

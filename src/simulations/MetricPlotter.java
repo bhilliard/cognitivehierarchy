@@ -1,20 +1,24 @@
 package simulations;
 
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.File;
-import java.util.AbstractQueue;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.chart.renderer.xy.XYShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -37,14 +41,123 @@ public class MetricPlotter {
 		if (!this.inDir.endsWith("/"))
 			this.inDir += "/";
 		this.outDir = outDir;
-		getGames();
 	}
 
 	public MetricPlotter(String inDir, String outDir, int avgWindow) {
 		this(inDir, outDir);
 		this.queueSize = avgWindow;
 	}
-	
+
+	public void plotTauExperiment() {
+
+		Map<Set<Integer>, Map<Double, Integer>> tauData = getTauData();
+		XYPlot plot = new XYPlot();
+
+		String title = "Cooperation vs Tau";
+
+		NumberAxis domain = new NumberAxis("Tau");
+		NumberAxis range = new NumberAxis("Agent's k-Level");
+		plot.setDomainAxis(0, domain);
+		plot.setRangeAxis(0, range);
+
+		int counter = 0;
+		for (Set<Integer> set : tauData.keySet()) {
+			XYSeries series = new XYSeries(set.toString());
+			for (Double tau : tauData.get(set).keySet()) {
+				series.add(tau, tauData.get(set).get(tau));
+			}
+			XYSeriesCollection dataset = new XYSeriesCollection();
+			dataset.addSeries(series);
+
+			plot.setDataset(counter, dataset);
+
+			XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+			plot.setRenderer(counter, renderer);
+			renderer.setSeriesPaint(counter, Color.CYAN);
+			renderer.setBaseShapesVisible(true);
+
+			plot.mapDatasetToDomainAxis(counter, 0);
+			plot.mapDatasetToRangeAxis(counter, 0);
+
+			counter++;
+		}
+
+		showPlot(plot, title);
+
+	}
+
+	public Map<Set<Integer>, Map<Double, Integer>> getTauData() {
+		Map<Set<Integer>, Map<Double, Integer>> data = new HashMap<Set<Integer>, Map<Double, Integer>>();
+		try {
+			for (File expFile : new File(this.inDir).listFiles()) {
+				if (expFile.isDirectory()) {
+
+					// Get tau form meta.txt
+					String metaFile = expFile.getAbsolutePath() + "/meta.txt";
+					BufferedReader reader;
+					reader = new BufferedReader(new FileReader(metaFile));
+					String line = reader.readLine();
+					while (!line.contains("Tau"))
+						line = reader.readLine();
+					reader.close();
+					Double tau = Double.valueOf(line.split(": ")[1]);
+					int count;
+					for (File match : expFile.listFiles()) {
+						if (match.isDirectory()) {
+							Integer agent0 = Integer.valueOf(match.getName()
+									.split("_")[3] );
+							Integer agent1 = Integer.valueOf(match.getName()
+									.split("_")[1]);
+							Set<Integer> playerSet = new HashSet<Integer>();
+							playerSet.add(agent0);
+							playerSet.add(agent1);
+
+							count = getNumCooperate(match);
+
+							if (data.containsKey(playerSet)) {
+								Map<Double, Integer> M = data.get(playerSet);
+								if (M.containsKey(tau)) {
+									M.put(tau, M.get(tau) + count);
+								} else {
+									M.put(tau, count);
+								}
+							} else {
+								Map<Double, Integer> M = new HashMap<Double, Integer>();
+								M.put(tau, count);
+								data.put(playerSet, M);
+							}
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return data;
+	}
+
+	private int getNumCooperate(File match) {
+		int count = 0;
+		StateParser sp = new StateJSONParser(this.domain);
+
+		for (File trial : match.listFiles()) {
+			if (trial.isFile()) {
+				GameAnalysis ga = GameAnalysis.parseFileIntoGA(
+						trial.getAbsolutePath(), this.domain, sp);
+				boolean isCooperative = true;
+				for (double reward : ga.getJointReward(ga.numTimeSteps() - 1)
+						.values()) {
+					if (reward <= 0)
+						isCooperative = false;
+				}
+				if (isCooperative)
+					count++;
+			}
+		}
+
+		return count;
+	}
+
 	protected void getGames() {
 
 		File[] matchFiles = new File(this.inDir).listFiles();
@@ -64,19 +177,19 @@ public class MetricPlotter {
 			}
 		}
 	}
-	
-	public void plotLearningReward(){
+
+	public void plotLearningReward() {
 		plotReward(gasL, "Learning");
 	}
-	
-	public void plotTrialReward(){
+
+	public void plotTrialReward() {
 		plotReward(gas, "Trial");
 	}
 
 	protected void plotReward(ArrayList<GameAnalysis> gas, String title) {
 		XYPlot plot = new XYPlot();
 
-		title = "Reward-"+title;
+		title = "Reward-" + title;
 
 		XYSeriesCollection dataset0 = new XYSeriesCollection();
 		XYSeriesCollection dataset1 = new XYSeriesCollection();
@@ -93,8 +206,7 @@ public class MetricPlotter {
 		double agent0Sum, agent1Sum, agent0Avg, agent1Avg;
 		LinkedList<Double> agent0q = new LinkedList<Double>(), agent1q = new LinkedList<Double>();
 		for (int i = 0; i < gas.size(); i++) {
-			List<Map<String, Double>> rewards = gas.get(i)
-					.getJointRewards();
+			List<Map<String, Double>> rewards = gas.get(i).getJointRewards();
 			agent0Sum = 0;
 			agent1Sum = 0;
 
@@ -150,7 +262,7 @@ public class MetricPlotter {
 
 		showPlot(plot, title);
 	}
-	
+
 	public void plotNumSteps() {
 		XYPlot plot = new XYPlot();
 
@@ -159,20 +271,18 @@ public class MetricPlotter {
 		XYSeriesCollection dataset0 = new XYSeriesCollection();
 
 		XYLineAndShapeRenderer renderer0 = new XYLineAndShapeRenderer();
-		
+
 		NumberAxis domain = new NumberAxis("x");
 		NumberAxis range = new NumberAxis("y");
 
 		XYSeries steps = new XYSeries("Num Steps");
-		
 
 		double avgNumTimeSteps;
 		double numTimeSteps;
 		LinkedList<Double> q = new LinkedList<Double>();
 		for (int i = 0; i < gas.size(); i++) {
-			
+
 			numTimeSteps = this.gas.get(i).numTimeSteps();
-			
 
 			if (q.size() == this.queueSize) {
 				q.removeFirst();
@@ -186,22 +296,22 @@ public class MetricPlotter {
 					avgNumTimeSteps += q.get(j);
 				}
 				avgNumTimeSteps /= queueSize;
-				
+
 				steps.add(i, avgNumTimeSteps);
-				
+
 			}
 		}
 
 		dataset0.addSeries(steps);
-		
+
 		plot.setDataset(0, dataset0);
 
 		plot.setRenderer(0, renderer0);
-		
+
 		renderer0.setSeriesPaint(0, Color.CYAN);
-		
+
 		renderer0.setBaseShapesVisible(false);
-		
+
 		plot.setDomainAxis(0, domain);
 		plot.setRangeAxis(0, range);
 
@@ -226,9 +336,9 @@ public class MetricPlotter {
 
 	public static void main(String[] args) {
 
-		MetricPlotter plot = new MetricPlotter("../2015_08_12_03_19_52", "");
-		plot.plotTrialReward();
-		plot.plotLearningReward();
+		MetricPlotter plot = new MetricPlotter(
+				"../Experiments_2015_08_14_17_14_45", "");
+		plot.plotTauExperiment();
 
 	}
 }
