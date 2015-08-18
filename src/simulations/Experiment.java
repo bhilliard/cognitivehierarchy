@@ -833,9 +833,9 @@ public class Experiment {
 		boolean runStochasticPolicyPlanner = true; // handles when policies are
 		// stochastically combined
 
-		boolean runKNotQTests = true;
+		boolean runKNotQTests = false;
 
-		int numTrials = 5;
+		int numTrials = 10;
 		int numLearningEpisodes = 10000;
 
 		String[] gameFile = new String[] {

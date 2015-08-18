@@ -341,9 +341,13 @@ public class MetricPlotter {
 	public static void main(String[] args) {
 
 		MetricPlotter plot = new MetricPlotter(
-				"../2015_08_12_05_26_12", "");
+				"../2015_08_18_12_04_28", "");
 		plot.plotLearningReward();
-//		plot.plotTrialReward();();
+		plot.plotTrialReward();
+		
+		// MetricPlotter plot = new MetricPlotter(
+		// "../2015_08_18_12_04_28", "");
+		// plot.plotTauExperiment();
 
 	}
 }
