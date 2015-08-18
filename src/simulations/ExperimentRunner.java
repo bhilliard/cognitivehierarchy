@@ -119,7 +119,14 @@ public class ExperimentRunner {
 	}
 
 	public static void main(String[] args) {
+		long startTime = System.currentTimeMillis();
+
 		ExperimentRunner expRun = new ExperimentRunner("./TauConfig.properties");
 		expRun.runExperiment();
+		
+
+		long endTime = System.currentTimeMillis();
+		long totalTime = endTime - startTime;
+		System.out.println("Total time:  " + totalTime / 1000.0 + " s");
 	}
 }

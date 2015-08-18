@@ -50,13 +50,13 @@ public class MetricPlotter {
 
 	public void plotTauExperiment() {
 
-		Map<Set<Integer>, Map<Double, Integer>> tauData = getTauData();
+		Map<Set<Integer>, Map<Double, Double>> tauData = getTauData();
 		XYPlot plot = new XYPlot();
 
 		String title = "Cooperation vs Tau";
 
 		NumberAxis domain = new NumberAxis("Tau");
-		NumberAxis range = new NumberAxis("Agent's k-Level");
+		NumberAxis range = new NumberAxis("Percantage Cooperative Games (%)");
 		plot.setDomainAxis(0, domain);
 		plot.setRangeAxis(0, range);
 
@@ -86,8 +86,8 @@ public class MetricPlotter {
 
 	}
 
-	public Map<Set<Integer>, Map<Double, Integer>> getTauData() {
-		Map<Set<Integer>, Map<Double, Integer>> data = new HashMap<Set<Integer>, Map<Double, Integer>>();
+	public Map<Set<Integer>, Map<Double, Double>> getTauData() {
+		Map<Set<Integer>, Map<Double, Double>> data = new HashMap<Set<Integer>, Map<Double, Double>>();
 		try {
 			for (File expFile : new File(this.inDir).listFiles()) {
 				if (expFile.isDirectory()) {
@@ -101,7 +101,7 @@ public class MetricPlotter {
 						line = reader.readLine();
 					reader.close();
 					Double tau = Double.valueOf(line.split(": ")[1]);
-					int count;
+					double percent;
 					for (File match : expFile.listFiles()) {
 						if (match.isDirectory()) {
 							Integer agent0 = Integer.valueOf(match.getName()
@@ -112,18 +112,18 @@ public class MetricPlotter {
 							playerSet.add(agent0);
 							playerSet.add(agent1);
 
-							count = getNumCooperate(match);
+							percent = getPercentCooperate(match);
 
 							if (data.containsKey(playerSet)) {
-								Map<Double, Integer> M = data.get(playerSet);
+								Map<Double, Double> M = data.get(playerSet);
 								if (M.containsKey(tau)) {
-									M.put(tau, M.get(tau) + count);
+									M.put(tau, (M.get(tau) + percent)/2);
 								} else {
-									M.put(tau, count);
+									M.put(tau, percent);
 								}
 							} else {
-								Map<Double, Integer> M = new HashMap<Double, Integer>();
-								M.put(tau, count);
+								Map<Double, Double> M = new HashMap<Double, Double>();
+								M.put(tau, percent);
 								data.put(playerSet, M);
 							}
 						}
@@ -133,11 +133,12 @@ public class MetricPlotter {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 		return data;
 	}
 
-	private int getNumCooperate(File match) {
-		int count = 0;
+	private double getPercentCooperate(File match) {
+		int coopCount = 0, totalCount = 0;
 		StateParser sp = new StateJSONParser(this.domain);
 
 		for (File trial : match.listFiles()) {
@@ -151,11 +152,12 @@ public class MetricPlotter {
 						isCooperative = false;
 				}
 				if (isCooperative)
-					count++;
+					coopCount++;
+				totalCount++;
 			}
 		}
 
-		return count;
+		return (coopCount*100.0)/totalCount;
 	}
 
 	protected void getGames() {
@@ -179,10 +181,12 @@ public class MetricPlotter {
 	}
 
 	public void plotLearningReward() {
+		getGames();
 		plotReward(gasL, "Learning");
 	}
 
 	public void plotTrialReward() {
+		getGames();
 		plotReward(gas, "Trial");
 	}
 
@@ -197,8 +201,8 @@ public class MetricPlotter {
 		XYLineAndShapeRenderer renderer0 = new XYLineAndShapeRenderer();
 		XYLineAndShapeRenderer renderer1 = new XYLineAndShapeRenderer();
 
-		NumberAxis domain = new NumberAxis("x");
-		NumberAxis range = new NumberAxis("y");
+		NumberAxis domain = new NumberAxis("Learning Episode");
+		NumberAxis range = new NumberAxis("Average Reward");
 
 		XYSeries agent0 = new XYSeries("Agent0");
 		XYSeries agent1 = new XYSeries("Agent1");
@@ -337,8 +341,9 @@ public class MetricPlotter {
 	public static void main(String[] args) {
 
 		MetricPlotter plot = new MetricPlotter(
-				"../Experiments_2015_08_14_17_14_45", "");
-		plot.plotTauExperiment();
+				"../2015_08_12_05_26_12", "");
+		plot.plotLearningReward();
+//		plot.plotTrialReward();();
 
 	}
 }

@@ -80,7 +80,7 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 	}
 
 	public static void main(String[] args) {
-		String dirName = "../2015_08_12_03_19_52";
+		String dirName = "../Experiments_2015_08_18_10_55_00/2015_08_18_10_55_00";
 		if (!dirName.endsWith("/"))
 			dirName += "/";
 		new ExperimentVisualizer(GGVisualizer.getVisualizer(6, 6),
