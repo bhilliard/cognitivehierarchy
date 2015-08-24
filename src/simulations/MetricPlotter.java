@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
@@ -30,8 +31,8 @@ import burlap.oomdp.stochasticgames.SGDomain;
 
 public class MetricPlotter {
 
-	protected ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>(),
-			gasL = new ArrayList<GameAnalysis>();
+	protected TreeMap<Integer, GameAnalysis> gas = new TreeMap<Integer, GameAnalysis>(),
+			gasL = new TreeMap<Integer, GameAnalysis>();
 	protected String inDir, outDir;
 	protected SGDomain domain = (SGDomain) new GridGame().generateDomain();
 	protected int queueSize = 1;
@@ -105,7 +106,7 @@ public class MetricPlotter {
 					for (File match : expFile.listFiles()) {
 						if (match.isDirectory()) {
 							Integer agent0 = Integer.valueOf(match.getName()
-									.split("_")[3] );
+									.split("_")[3]);
 							Integer agent1 = Integer.valueOf(match.getName()
 									.split("_")[1]);
 							Set<Integer> playerSet = new HashSet<Integer>();
@@ -117,7 +118,7 @@ public class MetricPlotter {
 							if (data.containsKey(playerSet)) {
 								Map<Double, Double> M = data.get(playerSet);
 								if (M.containsKey(tau)) {
-									M.put(tau, (M.get(tau) + percent)/2);
+									M.put(tau, (M.get(tau) + percent) / 2);
 								} else {
 									M.put(tau, percent);
 								}
@@ -133,7 +134,7 @@ public class MetricPlotter {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return data;
 	}
 
@@ -157,24 +158,25 @@ public class MetricPlotter {
 			}
 		}
 
-		return (coopCount*100.0)/totalCount;
+		return (coopCount * 100.0) / totalCount;
 	}
 
 	protected void getGames() {
 
 		File[] matchFiles = new File(this.inDir).listFiles();
 		StateParser sp = new StateJSONParser(this.domain);
-
+		int index;
 		for (File match : matchFiles) {
 			if (match.isDirectory()) {
 				for (File trial : match.listFiles()) {
 					GameAnalysis ga = GameAnalysis.parseFileIntoGA(this.inDir
 							+ match.getName() + "/" + trial.getName(),
 							this.domain, sp);
+					index = Integer.valueOf(trial.getName().split("_")[2].split("\\.")[0]);
 					if (match.getName().contains("earning"))
-						this.gasL.add(ga);
+						this.gasL.put(index, ga);
 					else
-						this.gas.add(ga);
+						this.gas.put(index, ga);
 				}
 			}
 		}
@@ -190,7 +192,7 @@ public class MetricPlotter {
 		plotReward(gas, "Trial");
 	}
 
-	protected void plotReward(ArrayList<GameAnalysis> gas, String title) {
+	protected void plotReward(TreeMap<Integer, GameAnalysis> gas, String title) {
 		XYPlot plot = new XYPlot();
 
 		title = "Reward-" + title;
@@ -340,14 +342,14 @@ public class MetricPlotter {
 
 	public static void main(String[] args) {
 
-		MetricPlotter plot = new MetricPlotter(
-				"../2015_08_18_12_04_28", "");
-		plot.plotLearningReward();
-		plot.plotTrialReward();
-		
-		// MetricPlotter plot = new MetricPlotter(
-		// "../2015_08_18_12_04_28", "");
-		// plot.plotTauExperiment();
+//		MetricPlotter plot = new MetricPlotter("../2015_08_18_17_29_16", "",
+//				1);
+//		plot.plotLearningReward();
+//		plot.plotTrialReward();
+
+		 MetricPlotter plot = new MetricPlotter(
+		 "../Experiments_2015_08_18_17_35_40", "");
+		 plot.plotTauExperiment();
 
 	}
 }

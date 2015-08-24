@@ -22,6 +22,8 @@ public class ExperimentRunner {
 	// solved for
 	private int kLevel;
 	boolean runValueIteration, runStochasticPolicyPlanner;
+	RewardCalculatorType rewardCalcType;
+	double cooperativeParameter, defensiveParameter;
 
 	// Game parameters
 	private String gameFile, outDir;
@@ -46,7 +48,11 @@ public class ExperimentRunner {
 
 	public ExperimentRunner(String configFile) {
 		config(configFile);
-	}
+	};
+
+	public enum RewardCalculatorType {
+		SELFISH, OTHER_REGARDING
+	};
 
 	public void runExperiment() {
 
@@ -61,7 +67,9 @@ public class ExperimentRunner {
 					this.stepCost, this.incurCostOnNoop, this.noopCost,
 					this.reward, tau, this.runValueIteration,
 					this.runStochasticPolicyPlanner, this.numTrials,
-					this.noopAllowed, this.outDir);
+					this.noopAllowed, this.rewardCalcType,
+					this.cooperativeParameter, this.defensiveParameter,
+					this.outDir);
 			exp.runKLevelExperiment(Level0Type.RANDOM);
 		}
 	}
@@ -104,6 +112,13 @@ public class ExperimentRunner {
 			this.temp = Double.valueOf(prop.getProperty("temp"));
 			this.saveLearning = Boolean.parseBoolean(prop
 					.getProperty("saveLearning"));
+			String rewardCalcTypeString = prop.getProperty("rewardCalc");
+			if(rewardCalcTypeString.equals("selfish"))
+				this.rewardCalcType = RewardCalculatorType.SELFISH;
+			else if (rewardCalcTypeString.equals("other_regarding"))
+				this.rewardCalcType = RewardCalculatorType.OTHER_REGARDING;
+			this.cooperativeParameter = Double.valueOf(prop.getProperty("cooperativeParameter"));
+			this.defensiveParameter = Double.valueOf(prop.getProperty("defensiveParameter"));
 
 		} catch (IOException ex) {
 			ex.printStackTrace();
@@ -123,7 +138,6 @@ public class ExperimentRunner {
 
 		ExperimentRunner expRun = new ExperimentRunner("./TauConfig.properties");
 		expRun.runExperiment();
-		
 
 		long endTime = System.currentTimeMillis();
 		long totalTime = endTime - startTime;
