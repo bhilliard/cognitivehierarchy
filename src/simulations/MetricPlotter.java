@@ -342,14 +342,14 @@ public class MetricPlotter {
 
 	public static void main(String[] args) {
 
-//		MetricPlotter plot = new MetricPlotter("../2015_08_18_17_29_16", "",
-//				1);
-//		plot.plotLearningReward();
-//		plot.plotTrialReward();
-
-		 MetricPlotter plot = new MetricPlotter(
-		 "../Experiments_2015_08_18_17_35_40", "");
-		 plot.plotTauExperiment();
+		MetricPlotter plot = new MetricPlotter(
+				"../2015_08_20_16_34_02", "",100);
+		plot.plotLearningReward();
+		plot.plotTrialReward();
+		
+		// MetricPlotter plot = new MetricPlotter(
+		// "../2015_08_18_12_04_28", "");
+		// plot.plotTauExperiment();
 
 	}
 }

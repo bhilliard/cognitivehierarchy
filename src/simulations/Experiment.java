@@ -541,22 +541,31 @@ public class Experiment {
 		// Map<String, Double> agentReward = new HashMap<String, Double>();
 		this.saveLearning = true;
 		SGBackupOperator operator;
+		System.out.println("Creating World");
+		//createWorld();
 		if (operatorType.compareToIgnoreCase("coco") == 0) {
+			System.out.println("____Running Coco");
 			operator = new CoCoQ();
 		} else if (operatorType.compareToIgnoreCase("max") == 0) {
+			System.out.println("____Running Max");
 			operator = new MaxQ();
 		} else if (operatorType.compareToIgnoreCase("minMax") == 0) {
+			System.out.println("____Running MinMax");
 			operator = new MinMaxQ();
 		} else if (operatorType.compareToIgnoreCase("correlated_egalitarian") == 0) {
+			System.out.println("____Running corr egal");
 			operator = new CorrelatedQ(
 					CorrelatedEquilibriumObjective.EGALITARIAN);
 		} else if (operatorType.compareToIgnoreCase("correlated_libertarian") == 0) {
+			System.out.println("____Running corr liber");
 			operator = new CorrelatedQ(
 					CorrelatedEquilibriumObjective.LIBERTARIAN);
 		} else if (operatorType.compareToIgnoreCase("correlated_republican") == 0) {
+			System.out.println("____Running corr repub");
 			operator = new CorrelatedQ(
 					CorrelatedEquilibriumObjective.REPUBLICAN);
 		} else if (operatorType.compareToIgnoreCase("correlated_utilitarian") == 0) {
+			System.out.println("____Running corr util");
 			operator = new CorrelatedQ(
 					CorrelatedEquilibriumObjective.UTILITARIAN);
 		} else {
@@ -571,11 +580,16 @@ public class Experiment {
 
 		MultiAgentQLearning maQLearning1 = new MultiAgentQLearning(domain,
 				DISCOUNT_FACTOR, LEARNING_RATE, new DiscreteStateHashFactory(),
-				0, operator, true);
+				0.0, operator, false);
 
 		MultiAgentQLearning maQLearning2 = new MultiAgentQLearning(domain,
 				DISCOUNT_FACTOR, LEARNING_RATE, new DiscreteStateHashFactory(),
-				0, operator, true);
+				0.0,  new MaxQ(), false);
+				
+//				new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
+//				this.LEARNING_RATE, new DiscreteStateHashFactory());
+				
+			
 
 		// Learning Phase
 		for (int i = 0; i < numEpisodes; i++) {
@@ -585,13 +599,17 @@ public class Experiment {
 					new AgentType(GridGame.CLASSAGENT, this.domain
 							.getObjectClass(GridGame.CLASSAGENT), this.domain
 							.getSingleActions()));
+		
 			maQLearning2.joinWorld(
 					this.gameWorld,
 					new AgentType(GridGame.CLASSAGENT, this.domain
 							.getObjectClass(GridGame.CLASSAGENT), this.domain
 							.getSingleActions()));
-			ga = this.gameWorld.runGame(TIMEOUT);
-
+			
+			ga = this.
+					gameWorld.
+					runGame(TIMEOUT);
+			gas.add(ga);
 			if (saveLearning) {
 				String outFile = outDir + "MALearning/" + "_Trial_" + i;
 				ga.writeToFile(outFile, sp);
@@ -599,6 +617,7 @@ public class Experiment {
 
 		}
 
+		System.out.println("The MA one: "+maQLearning1.getAgentName());
 		this.outFile = outDir;
 		return outDir;
 	}
@@ -893,7 +912,8 @@ public class Experiment {
 		} else {
 			// Run Q-Learners
 			// runner.runQVsCooperator(numLearningEpisodes);
-			runner.runQLearners(numLearningEpisodes);
+			runner.runMALearners(numLearningEpisodes, "max");
+			//runner.runQLearners(numLearningEpisodes);
 
 		}
 
