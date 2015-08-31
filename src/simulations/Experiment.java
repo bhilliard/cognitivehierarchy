@@ -1128,9 +1128,8 @@ public class Experiment {
 		boolean runKNotQTests = false;
 		
 		boolean runNine = true;
-
-		int numTrials = 1;
-		int numLearningEpisodes = 10;
+		int numTrials = 100;
+		int numLearningEpisodes = 10000;
 
 		String[] gameFile = new String[] {
 				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
@@ -1198,8 +1197,11 @@ public class Experiment {
 			// runner.runQVsCooperator(numLearningEpisodes);
 			//runner.runMALearners(numLearningEpisodes, "max");
 			//runner.runQLearners(numLearningEpisodes);
-			String[] agentTypes = {"ABCD", "ABDC", "BACD", "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
+			String[] agentTypes  = {"ABCD", "ABDC", "BACD", "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
 			runner.runQESS( numLearningEpisodes, numTrials, 1, agentTypes);
+			
+			//String[] agentTypes = {"ABCD", "ABDC", "BACD", "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
+			//runner.runQESS( numLearningEpisodes, numTrials, 1, agentTypes);
 
 		}
 

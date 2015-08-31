@@ -21,7 +21,7 @@ public class NineAgentParameters extends RewardParameters {
 		}else if(agentType.compareTo("BACD")==0){
 			double[] params = {1.0,0.0,0.25,0.0, 0.0};
 			return params;
-		}else if(agentType.compareTo("BADc")==0){
+		}else if(agentType.compareTo("BACd")==0){
 			double[] params = {1.0,0.0,0.0,-.25, 0.0};
 			return params;
 		}else if(agentType.compareTo("ABDC")==0){
