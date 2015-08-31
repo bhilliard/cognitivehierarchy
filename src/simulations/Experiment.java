@@ -1127,7 +1127,7 @@ public class Experiment {
 		boolean runKNotQTests = false;
 		boolean runNine = true;
 
-		int numTrials = 10;
+		int numTrials = 100;
 		int numLearningEpisodes = 10000;
 
 		String[] gameFile = new String[] {
@@ -1191,8 +1191,11 @@ public class Experiment {
 			// runner.runQVsCooperator(numLearningEpisodes);
 			//runner.runMALearners(numLearningEpisodes, "max");
 			//runner.runQLearners(numLearningEpisodes);
-			String[] agentTypes = {"ABCD", "ABDC", "BACD"};//,"BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
-			runner.runQESS( numLearningEpisodes, numTrials, 3, agentTypes);
+			String[] agentTypes  = {"ABCD", "ABDC", "BACD", "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
+			runner.runQESS( numLearningEpisodes, numTrials, 1, agentTypes);
+			
+			//String[] agentTypes = {"ABCD", "ABDC", "BACD", "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
+			//runner.runQESS( numLearningEpisodes, numTrials, 1, agentTypes);
 
 		}
 
