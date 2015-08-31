@@ -515,7 +515,7 @@ public class Experiment {
 
 		for (int a = 1; a <= numAttempts; a++) {
 			for (int t0 = 0; t0 < numAgentTypes; t0++) {
-				for (int t1 = 0; t1 < numAgentTypes; t1++) {
+				for (int t1 = t0; t1 < numAgentTypes; t1++) {
 
 					SGNaiveQLAgent agent0, agent1;
 					StateHashFactory hashFactory = new DiscreteStateHashFactory();
@@ -1191,7 +1191,7 @@ public class Experiment {
 			// runner.runQVsCooperator(numLearningEpisodes);
 			//runner.runMALearners(numLearningEpisodes, "max");
 			//runner.runQLearners(numLearningEpisodes);
-			String[] agentTypes  = {"ABCD", "ABDC", "BACD", "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
+			String[] agentTypes  = {"ABCD", "ABDC", "BACD"};//, "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
 			runner.runQESS( numLearningEpisodes, numTrials, 1, agentTypes);
 			
 			//String[] agentTypes = {"ABCD", "ABDC", "BACD", "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
