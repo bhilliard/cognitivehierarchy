@@ -1129,8 +1129,8 @@ public class Experiment {
 		
 		boolean runNine = true;
 
-		int numTrials = 10;
-		int numLearningEpisodes = 10000;
+		int numTrials = 1;
+		int numLearningEpisodes = 10;
 
 		String[] gameFile = new String[] {
 				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
@@ -1144,11 +1144,11 @@ public class Experiment {
 				"../MultiAgentGames/resources/worlds/TwoAgentsCross.json", // 8
 				"../MultiAgentGames/resources/worlds/TwoAgentsBox_5by5_2Walls.json", // 9
 				"../MultiAgentGames/resources/worlds/TwoAgentsBox_3by5_2Walls.json", // 10
-				"../MultiAgentGames/resources/worlds/TwoAgentsFourCorners_5by5_CrossWalls.json", // 1111
+				"../MultiAgentGames/resources/worlds/TwoAgentsFourCorners_5by5_CrossWalls.json", // 11
 				"turkey", "coordination", "prisonersdilemma" }; // 12,13,14
 
 		// Choose from a json game file or built-in option from the list above.
-		String file = gameFile[11];
+		String file = gameFile[6];
 
 		// Execution timer
 		long startTime = System.currentTimeMillis();
@@ -1198,8 +1198,8 @@ public class Experiment {
 			// runner.runQVsCooperator(numLearningEpisodes);
 			//runner.runMALearners(numLearningEpisodes, "max");
 			//runner.runQLearners(numLearningEpisodes);
-			String[] agentTypes = {"ABCD", "ABDC", "BACD"};//,"BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
-			runner.runQESS( numLearningEpisodes, numTrials, 3, agentTypes);
+			String[] agentTypes = {"ABCD", "ABDC", "BACD", "BADC", "ABCd","BACd","AbCD","AbDC","AbCd"};
+			runner.runQESS( numLearningEpisodes, numTrials, 1, agentTypes);
 
 		}
 
