@@ -50,7 +50,6 @@ public class AgentPolicyObjectPainter implements ObjectPainter {
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 			float cWidth, float cHeight) {
 
-
 		List<ActionProb> actionProbs = this.policy
 				.getActionDistributionForState(s);
 

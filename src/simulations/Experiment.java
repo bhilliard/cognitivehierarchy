@@ -100,6 +100,7 @@ public class Experiment {
 	private final double DISCOUNT_FACTOR = 0.99, LEARNING_RATE = 0.01;
 	private final int TIMEOUT = 100;
 	private RewardCalculator rewardCalc;
+	
 	private Map<String, RewardCalculator> rewardCalcMap;
 
 	public Experiment(String gameFile, int kLevel, double stepCost,
@@ -1118,30 +1119,36 @@ public class Experiment {
 		int tau = 3; // Parameter defines the distribution over lower levels
 		// that the agent assumes.
 
-		boolean runValueIteration = false; // set to false to run the
+		boolean runValueIteration = true; // set to false to run the
 		// BoundedRTDP
 		// agent instead on ValueIteration
 		boolean runStochasticPolicyPlanner = true; // handles when policies are
 		// stochastically combined
 
 		boolean runKNotQTests = false;
+		
 		boolean runNine = true;
 
 		int numTrials = 10;
 		int numLearningEpisodes = 10000;
 
 		String[] gameFile = new String[] {
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json",
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json",
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json",
-				"../MultiAgentGames/resources/worlds/LavaPits.json",
-				"../MultiAgentGames/resources/worlds/TwoAgentsTunnels",
-				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json",
-				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json",
-				"turkey", "coordination", "prisonersdilemma" };
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json", // 1
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json", // 2
+				"../MultiAgentGames/resources/worlds/LavaPits.json", // 3
+				"../MultiAgentGames/resources/worlds/TwoAgentsTunnels", // 4
+				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json", // 5
+				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json", // 6
+				"../MultiAgentGames/resources/worlds/TwoAgentsNarrowHall_1by10_noWalls.json", // 7
+				"../MultiAgentGames/resources/worlds/TwoAgentsCross.json", // 8
+				"../MultiAgentGames/resources/worlds/TwoAgentsBox_5by5_2Walls.json", // 9
+				"../MultiAgentGames/resources/worlds/TwoAgentsBox_3by5_2Walls.json", // 10
+				"../MultiAgentGames/resources/worlds/TwoAgentsFourCorners_5by5_CrossWalls.json", // 1111
+				"turkey", "coordination", "prisonersdilemma" }; // 12,13,14
 
 		// Choose from a json game file or built-in option from the list above.
-		String file = gameFile[6];
+		String file = gameFile[11];
 
 		// Execution timer
 		long startTime = System.currentTimeMillis();
@@ -1226,6 +1233,7 @@ public class Experiment {
 		// runner.gameWorld.startingState(),
 		// runner.solvedAgentPolicies.get("agent0").get(1));
 		// vis.initGUI();
+
 
 		long endTime = System.currentTimeMillis();
 		long totalTime = endTime - startTime;
