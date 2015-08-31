@@ -98,11 +98,30 @@ public class ColoredArrowActionGlyph extends ArrowActionGlyph {
 
 			}
 		} else {
+			int[] xTriangle = new int[] { (int) cx ,
+					(int) cx, (int) (cx - arrowHeadHeight) };
+			int[] yTriangle = new int[] { (int) cy+((int)(shaftHeight+arrowHeadWidth)/2), (int) cy+((int)(shaftHeight-arrowHeadWidth)/2),
+					(int) cy - (int)shaftHeight/2 };
+			
+			Polygon triangle = new Polygon(xTriangle, yTriangle, 3);
+
+			img.fillPolygon(triangle);
+			
 			float radius = 0.65f * shaftHeight;
 			img.setStroke(new BasicStroke(strokeWidth));
 			img.draw(new Ellipse2D.Float(cx - radius, cy - radius, 2 * radius,
 					2 * radius));
-			g2.drawImage(glyphImage, (int) x, (int) y, null);
+			
+
+			double locationX = width / 2;
+			double locationY = height / 2;
+			double rotationRequired = Math.PI/2;
+			AffineTransform tx = AffineTransform.getRotateInstance(
+					rotationRequired, locationX, locationY);
+			AffineTransformOp op = new AffineTransformOp(tx,
+					AffineTransformOp.TYPE_BILINEAR);
+			g2.drawImage(op.filter(glyphImage, null), (int) x, (int) y,
+					null);
 		}
 	}
 }

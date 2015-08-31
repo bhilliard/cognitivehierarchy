@@ -113,6 +113,8 @@ public class Experiment {
 	private final double DISCOUNT_FACTOR = 0.99, LEARNING_RATE = 0.01;
 	private final int TIMEOUT = 100;
 	private RewardCalculator rewardCalc;
+	protected Policy qAgent0Policy;
+	protected Policy qAgent1Policy;
 
 	public Experiment(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoOp, double noopCost, double reward,
@@ -531,10 +533,21 @@ public class Experiment {
 
 		}
 
+		qAgent0Policy = policyMap.get("agent0");
+		qAgent1Policy = policyMap.get("agent1");
+
 		qMetaString();
 		this.outFile = outDir;
 		writeMetaData();
 		return outDir;
+	}
+
+	public Policy getqAgent0Policy() {
+		return qAgent0Policy;
+	}
+
+	public Policy getqAgent1Policy() {
+		return qAgent1Policy;
 	}
 
 	public String runMALearners(int numEpisodes, String operatorType) {
@@ -840,41 +853,46 @@ public class Experiment {
 
 	public static void main(String[] args) {
 
-		double reward = 500.0; // Set this to set the rewards for goals.
+		double reward = 50.0; // Set this to set the rewards for goals.
 		// This should maybe be set by a config file
 		// called by the BR2D agent later.
-		double stepCost = -1.0;
-		double noopCost = -.75;
+		double stepCost = 0.0;
+		double noopCost = 0.0;
 
 		boolean incurCostOnNoop = true;
 		boolean noopAllowed = true;
-		int kLevel = 4; // This is the level the "smartest" agent will be.
+		int kLevel = 5; // This is the level the "smartest" agent will be.
 		int tau = 5; // Parameter defines the distribution over lower levels
 		// that the agent assumes.
 
-		boolean runValueIteration = false; // set to false to run the
+		boolean runValueIteration = true; // set to false to run the
 		// BoundedRTDP
 		// agent instead on ValueIteration
 		boolean runStochasticPolicyPlanner = true; // handles when policies are
 		// stochastically combined
 
-		boolean runKNotQTests = true;
+		boolean runKNotQTests = false;
 
-		int numTrials = 10;
-		int numLearningEpisodes = 2000;
+		int numTrials = 100;
+		int numLearningEpisodes = 30000;
 
 		String[] gameFile = new String[] {
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json",
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json",
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json",
-				"../MultiAgentGames/resources/worlds/LavaPits.json",
-				"../MultiAgentGames/resources/worlds/TwoAgentsTunnels",
-				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json",
-				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json",
-				"turkey", "coordination", "prisonersdilemma" };
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json", // 1
+				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json", // 2
+				"../MultiAgentGames/resources/worlds/LavaPits.json", // 3
+				"../MultiAgentGames/resources/worlds/TwoAgentsTunnels", // 4
+				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json", // 5
+				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json", // 6
+				"../MultiAgentGames/resources/worlds/TwoAgentsNarrowHall_1by10_noWalls.json", // 7
+				"../MultiAgentGames/resources/worlds/TwoAgentsCross.json", // 8
+				"../MultiAgentGames/resources/worlds/TwoAgentsBox_5by5_2Walls.json", // 9
+				"../MultiAgentGames/resources/worlds/TwoAgentsBox_3by5_2Walls.json", // 10
+				"../MultiAgentGames/resources/worlds/TwoAgentsFourCorners_5by5_CrossWalls.json", // 1111
+				"turkey", "coordination", "prisonersdilemma" }; // 12,13,14
 
 		// Choose from a json game file or built-in option from the list above.
-		String file = gameFile[6];
+		String file = gameFile[11];
 
 		// Execution timer
 		long startTime = System.currentTimeMillis();
@@ -894,39 +912,54 @@ public class Experiment {
 			// Run Q-Learners
 			// runner.runQVsCooperator(numLearningEpisodes);
 			runner.runQLearners(numLearningEpisodes);
+			// MetricPlotter plot = new MetricPlotter(runner.outFile,
+			// runner.outFile, 150);
+			// plot.plotLearningReward();
+
+			Visualizer v = GGVisualizer.getVisualizer(6, 6);
+			v.addSpecificObjectPainter("agent0", new AgentPolicyObjectPainter(
+					runner.getqAgent0Policy(), "agent0"));
+			v.addSpecificObjectPainter("agent1", new AgentPolicyObjectPainter(
+					runner.getqAgent1Policy(), "agent1"));
+
+			SGVisualExplorer sgve = new SGVisualExplorer(runner.domain, v,
+					runner.gameWorld.startingState());
+			sgve.addKeyAction("w", "agent0:north");
+			sgve.addKeyAction("a", "agent0:west");
+			sgve.addKeyAction("s", "agent0:noop");
+			sgve.addKeyAction("d", "agent0:east");
+			sgve.addKeyAction("x", "agent0:south");
+			sgve.addKeyAction("i", "agent1:north");
+			sgve.addKeyAction("j", "agent1:west");
+			sgve.addKeyAction("k", "agent1:noop");
+			sgve.addKeyAction("l", "agent1:east");
+			sgve.addKeyAction(",", "agent1:south");
+			sgve.initGUI();
 
 		}
 
 		// Visualize Results
-		Visualizer v = GGVisualizer.getVisualizer(6, 6);
-		v.addSpecificObjectPainter("agent0", new AgentPolicyObjectPainter(
-				runner.solvedAgentPolicies.get("agent0").get(4), "agent0"));
-		v.addSpecificObjectPainter("agent1", new AgentPolicyObjectPainter(
-				runner.solvedAgentPolicies.get("agent1").get(3), "agent1"));
-		
-		SGVisualExplorer sgve = new SGVisualExplorer(runner.domain, v, runner.gameWorld.startingState());
-		sgve.addKeyAction("w", "agent0:north");
-		sgve.addKeyAction("a", "agent0:west");
-		sgve.addKeyAction("s", "agent0:noop");
-		sgve.addKeyAction("d", "agent0:east");
-		sgve.addKeyAction("x", "agent0:south");
-		sgve.addKeyAction("i", "agent1:north");
-		sgve.addKeyAction("j", "agent1:west");
-		sgve.addKeyAction("k", "agent1:noop");
-		sgve.addKeyAction("l", "agent1:east");
-		sgve.addKeyAction(",", "agent1:south");
-		sgve.initGUI();
-		// new ExperimentVisualizer(v, runner.getDomain(), runner.outFile);
+		// Visualizer v = GGVisualizer.getVisualizer(10, 10);
+		// new ExperimentVisualizer(v, runner.domain, runner.outFile);
 
-		List<State> states = new ArrayList<State>();
-		states.add(runner.gameWorld.startingState());
-
-		// PolicyVisualizer vis = new PolicyVisualizer(states,
-		// runner.solvedAgentPolicies.get("agent0").get(0));
-		// VisPlorer vis = new VisPlorer(runner.domain, v,
-		// runner.gameWorld.startingState(),
-		// runner.solvedAgentPolicies.get("agent0").get(1));
-		// vis.initGUI();
+		// v.addSpecificObjectPainter("agent0", new AgentPolicyObjectPainter(
+		// runner.solvedAgentPolicies.get("agent0").get(4), "agent0"));
+		// v.addSpecificObjectPainter("agent1", new AgentPolicyObjectPainter(
+		// runner.solvedAgentPolicies.get("agent1").get(3), "agent1"));
+		//
+		// SGVisualExplorer sgve = new SGVisualExplorer(runner.domain, v,
+		// runner.gameWorld.startingState());
+		// sgve.addKeyAction("w", "agent0:north");
+		// sgve.addKeyAction("a", "agent0:west");
+		// sgve.addKeyAction("s", "agent0:noop");
+		// sgve.addKeyAction("d", "agent0:east");
+		// sgve.addKeyAction("x", "agent0:south");
+		// sgve.addKeyAction("i", "agent1:north");
+		// sgve.addKeyAction("j", "agent1:west");
+		// sgve.addKeyAction("k", "agent1:noop");
+		// sgve.addKeyAction("l", "agent1:east");
+		// sgve.addKeyAction(",", "agent1:south");
+		// sgve.initGUI();
 
 		long endTime = System.currentTimeMillis();
 		long totalTime = endTime - startTime;

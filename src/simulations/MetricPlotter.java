@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.jfree.chart.ChartFrame;
+import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
@@ -189,6 +191,7 @@ public class MetricPlotter {
 
 	public void plotTrialReward() {
 		getGames();
+		setQueueSize(1);
 		plotReward(gas, "Trial");
 	}
 
@@ -334,22 +337,41 @@ public class MetricPlotter {
 
 		JFreeChart chart = new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT,
 				plot, true);
-
-		ChartFrame frame = new ChartFrame("", chart);
+		saveToFile(chart, title);
+		ChartFrame frame = new ChartFrame(inDir, chart);
 		frame.pack();
 		frame.setVisible(true);
+
+	}
+	
+	public void saveToFile(JFreeChart chart, String fileName){
+		saveToFile(chart, fileName, 700, 500);
+	}
+	
+	public void saveToFile(JFreeChart chart, String fileName, int width, int height){
+		try {
+			File outFile = new File(inDir+fileName+".jpeg");
+			ChartUtilities.saveChartAsJPEG(outFile, chart, width, height);
+		} catch (IOException e) {
+			e.printStackTrace();
+		};
+	}
+
+	protected void setQueueSize(int queueSize) {
+		this.queueSize = queueSize;
 	}
 
 	public static void main(String[] args) {
 
-//		MetricPlotter plot = new MetricPlotter("../2015_08_18_17_29_16", "",
-//				1);
-//		plot.plotLearningReward();
-//		plot.plotTrialReward();
+		MetricPlotter plot = new MetricPlotter("../2015_08_28_14_38_08", "",
+				150);
+		plot.plotLearningReward();
+		plot.plotTrialReward();
 
-		 MetricPlotter plot = new MetricPlotter(
-		 "../Experiments_2015_08_18_17_35_40", "");
-		 plot.plotTauExperiment();
+//		 MetricPlotter plot = new MetricPlotter(
+//		 "../Experiments_2015_08_26_14_06_36", "");
+//		 plot.plotTauExperiment();
+		 
 
 	}
 }

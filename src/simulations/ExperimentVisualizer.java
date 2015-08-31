@@ -86,11 +86,11 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 	}
 
 	public static void main(String[] args) {
-		String dirName = "../2015_08_18_16_02_13";
+		String dirName = "../2015_08_25_11_45_25";
 		if (!dirName.endsWith("/"))
 			dirName += "/";
-		new ExperimentVisualizer(GGVisualizer.getVisualizer(6, 6),
-				(SGDomain) new GridGame().generateDomain(), dirName, true);
+		new ExperimentVisualizer(GGVisualizer.getVisualizer(10, 10),
+				(SGDomain) new GridGame().generateDomain(), dirName, false);
 		// new ExperimentVisualizer(GGVisualizer.getVisualizer(6, 6),
 		// (SGDomain) new GridGame().generateDomain(), dirName, true);
 	}

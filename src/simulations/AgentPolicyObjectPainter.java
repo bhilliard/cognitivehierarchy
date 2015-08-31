@@ -37,7 +37,7 @@ public class AgentPolicyObjectPainter implements ObjectPainter {
 		spp.setActionNameGlyphPainter(GridWorldDomain.ACTIONWEST,
 				new ColoredArrowActionGlyph(3));
 		spp.setActionNameGlyphPainter("noop", new ColoredArrowActionGlyph(4));
-		 spp.setRenderStyle(PolicyGlyphRenderStyle.DISTSCALED);
+		spp.setRenderStyle(PolicyGlyphRenderStyle.DISTSCALED);
 
 		this.pLayer = new PolicyRenderLayer(null, spp, policy);
 	}
@@ -45,7 +45,6 @@ public class AgentPolicyObjectPainter implements ObjectPainter {
 	@Override
 	public void paintObject(Graphics2D g2, State s, ObjectInstance ob,
 			float cWidth, float cHeight) {
-
 
 		List<ActionProb> actionProbs = this.policy
 				.getActionDistributionForState(s);
@@ -72,7 +71,8 @@ public class AgentPolicyObjectPainter implements ObjectPainter {
 			spp.setActionNameGlyphPainter(actionProb.ga.actionName(),
 					new ColoredArrowActionGlyph(actionNum,
 							actionProb.pSelection));
-			System.out.println(actionProb.ga.actionName()+": "+actionProb.pSelection);
+			System.out.println(actionProb.ga.actionName() + ": "
+					+ actionProb.pSelection);
 
 		}
 
