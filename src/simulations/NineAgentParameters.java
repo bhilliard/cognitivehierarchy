@@ -21,7 +21,7 @@ public class NineAgentParameters extends RewardParameters {
 		}else if(agentType.compareTo("BACD")==0){
 			double[] params = {1.0,0.0,0.25,0.0, 0.0};
 			return params;
-		}else if(agentType.compareTo("BACd")==0){
+		}else if(agentType.compareTo("BACxD")==0){
 			double[] params = {1.0,0.0,0.0,-.25, 0.0};
 			return params;
 		}else if(agentType.compareTo("ABDC")==0){
@@ -30,16 +30,16 @@ public class NineAgentParameters extends RewardParameters {
 		}else if(agentType.compareTo("ABCD")==0){
 			double[] params = {1.0,.25,0.0,0.0, 0.0};
 			return params;
-		}else if(agentType.compareTo("ABCd")==0){
+		}else if(agentType.compareTo("ABCxD")==0){
 			double[] params = {1.0,0.0,0.0,-.25, 0.0};
 			return params;
-		}else if(agentType.compareTo("AbDC")==0){
+		}else if(agentType.compareTo("AxBDC")==0){
 			double[] params = {1.0,0.0,0.0,0.0,-.25};
 			return params;
-		}else if(agentType.compareTo("AbCD")==0){
+		}else if(agentType.compareTo("AxBCD")==0){
 			double[] params = {1.0,.25,0.0,0.25, 0.0};
 			return params;
-		}else if(agentType.compareTo("AbCd")==0){
+		}else if(agentType.compareTo("AxBCxD")==0){
 			double[] params = {1.0,0.0,0.0,0.0, 0.0};
 			return params;
 		}else{

@@ -174,7 +174,8 @@ public class MetricPlotter {
 					GameAnalysis ga = GameAnalysis.parseFileIntoGA(this.inDir
 							+ match.getName() + "/" + trial.getName(),
 							this.domain, sp);
-					index = Integer.valueOf(trial.getName().split("_")[2].split("\\.")[0]);
+					String[] split = trial.getName().split("_");
+					index = Integer.valueOf(split[split.length - 1].split("\\.")[0]);
 					if (match.getName().contains("earning"))
 						this.gasL.put(index, ga);
 					else
@@ -191,7 +192,6 @@ public class MetricPlotter {
 
 	public void plotTrialReward() {
 		getGames();
-		setQueueSize(1);
 		plotReward(gas, "Trial");
 	}
 
@@ -364,12 +364,12 @@ public class MetricPlotter {
 	public static void main(String[] args) {
 
 		MetricPlotter plot = new MetricPlotter(
-				"../Experiments_2015_08_25_12_30_58", "",100);
-		//plot.plotLearningReward();
-		//plot.plotTrialReward();
+				"../2015_08_31_16_14_11/", "",150);
+		plot.plotLearningReward();
+		plot.plotTrialReward();
 		
 		// MetricPlotter plot = new MetricPlotter(
 		// "../2015_08_18_12_04_28", "");
-		plot.plotTauExperiment();
+//		plot.plotTauExperiment();
 	}
 }
