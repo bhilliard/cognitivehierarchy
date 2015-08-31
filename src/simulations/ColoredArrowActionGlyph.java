@@ -31,6 +31,12 @@ public class ColoredArrowActionGlyph extends ArrowActionGlyph {
 		super(direction);
 		this.scale = (float) scale;
 	}
+	
+	public ColoredArrowActionGlyph(int direction, Color arrowColor, double scale) {
+		super(direction);
+		this.fillColor = arrowColor;
+		this.scale = (float) scale;
+	}
 
 	@Override
 	public void paintGlyph(Graphics2D g2, float x, float y, float width,

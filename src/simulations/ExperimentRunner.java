@@ -51,7 +51,7 @@ public class ExperimentRunner {
 	};
 
 	public enum RewardCalculatorType {
-		SELFISH, OTHER_REGARDING
+		SELFISH, OTHER_REGARDING, OTHER_REGARDING_NINE	
 	};
 
 	public void runExperiment() {

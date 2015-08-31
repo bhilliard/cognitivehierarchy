@@ -1,5 +1,6 @@
 package simulations;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +21,11 @@ public class AgentPolicyObjectPainter implements ObjectPainter {
 	PolicyRenderLayer pLayer;
 	Policy policy;
 	private PolicyGlyphPainter2D spp;
+	String agentName;
+	Color[] agentColors = {Color.GREEN,Color.BLUE,Color.RED};
 
 	public AgentPolicyObjectPainter(Policy policy, String agentName) {
+		this.agentName = agentName;
 		this.policy = policy;
 
 		this.spp = new PolicyGlyphPainter2D();
@@ -37,7 +41,7 @@ public class AgentPolicyObjectPainter implements ObjectPainter {
 		spp.setActionNameGlyphPainter(GridWorldDomain.ACTIONWEST,
 				new ColoredArrowActionGlyph(3));
 		spp.setActionNameGlyphPainter("noop", new ColoredArrowActionGlyph(4));
-		 spp.setRenderStyle(PolicyGlyphRenderStyle.DISTSCALED);
+		spp.setRenderStyle(PolicyGlyphRenderStyle.DISTSCALED);
 
 		this.pLayer = new PolicyRenderLayer(null, spp, policy);
 	}
@@ -69,9 +73,13 @@ public class AgentPolicyObjectPainter implements ObjectPainter {
 				actionNum = 4;
 			}
 
+
+			//TODO: Fix color here
+			int agentNum = Integer.valueOf(agentName.split("agent")[0]);
+			Color color = agentColors[agentNum];
+			
 			spp.setActionNameGlyphPainter(actionProb.ga.actionName(),
-					new ColoredArrowActionGlyph(actionNum,
-							actionProb.pSelection));
+					new ColoredArrowActionGlyph(actionNum, color, actionProb.pSelection));
 			System.out.println(actionProb.ga.actionName()+": "+actionProb.pSelection);
 
 		}
