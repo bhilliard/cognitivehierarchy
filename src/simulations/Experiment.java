@@ -102,6 +102,7 @@ public class Experiment {
 	private RewardCalculator rewardCalc;
 
 	private Map<String, RewardCalculator> rewardCalcMap;
+	private String bashLoopIndex;
 
 	public Experiment(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoOp, double noopCost, double reward,
@@ -198,6 +199,19 @@ public class Experiment {
 
 			}
 		}
+	}
+
+	public Experiment(String gameFile, int kLevel, double stepCost,
+			boolean incurCostOnNoop, double noopCost, double reward, int tau,
+			boolean runValueIteration, boolean runStochasticPolicyPlanner,
+			int numTrials, boolean noopAllowed,
+			Map<String, RewardCalculatorType> rewardCalcTypeMap,
+			Map<String, String> parameterTypes, String bashLoopIndex) {
+
+		this(gameFile, kLevel, stepCost, incurCostOnNoop, noopCost, reward,
+				tau, runValueIteration, runStochasticPolicyPlanner, numTrials,
+				noopAllowed, rewardCalcTypeMap, parameterTypes);
+		this.bashLoopIndex = bashLoopIndex;
 	}
 
 	public Experiment(String gameFile, int kLevel, double stepCost,
@@ -511,7 +525,7 @@ public class Experiment {
 		double[][][] rewardMatrix = new double[numAgentTypes][numAgentTypes][2];
 
 		String outDir = makeOutDir();
-		
+
 		this.numLearningEpisodes = numLearningEpisodes;
 
 		experimentMetaString();
@@ -519,7 +533,7 @@ public class Experiment {
 
 		for (int a = 0; a < numAttempts; a++) {
 			for (int t0 = 0; t0 < numAgentTypes; t0++) {
-				for (int t1 = t0; t1 < numAgentTypes; t1++) {
+				for (int t1 = t0 + 1; t1 < numAgentTypes; t1++) {
 
 					SGNaiveQLAgent agent0, agent1;
 					StateHashFactory hashFactory = new DiscreteStateHashFactory();
@@ -610,7 +624,7 @@ public class Experiment {
 									.get("agent0");
 							rewardMatrix[t1][t0][1] += agentReward
 									.get("agent1");
-							if (a == numAttempts
+							if (a == numAttempts - 1
 									&& i == numLearningEpisodes + numGameTrials
 											- 1) {
 								// System.out.println("DIVIDING MATRIX by "+numAttempts*numGameTrials+" __________________%*^(*#^*(#*$%^)(#$)%(^)#%*(^)#*$)");
@@ -645,7 +659,7 @@ public class Experiment {
 								new AgentType(GridGame.CLASSAGENT, this.domain
 										.getObjectClass(GridGame.CLASSAGENT),
 										this.domain.getSingleActions()));
-						
+
 						agentSet.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
 								rewardCalcMap, gameWorld.getRewardModel(),
 								agentSet.getAgentName()));
@@ -667,7 +681,6 @@ public class Experiment {
 				}
 			}
 		}
-		
 
 		System.out.println(numAgentTypes);
 
@@ -1158,7 +1171,13 @@ public class Experiment {
 
 	private String makeOutDir() {
 		Date date = new Date();
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+		SimpleDateFormat ft;
+		if (bashLoopIndex != null) {
+			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS_"
+					+ bashLoopIndex);
+		} else {
+			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
+		}
 		String outDir = this.outDirRoot + ft.format(date) + "/";
 		File dirFile = new File(outDir);
 		dirFile.mkdir();
@@ -1187,9 +1206,10 @@ public class Experiment {
 
 		boolean runKNotQTests = false;
 
-		boolean runNine = true;
-		int numTrials = 2;
-		int numLearningEpisodes = 10;
+		boolean runNine = false;
+		int numTrials = 100;
+		int numLearningEpisodes = 12500;
+		int attempts = 1;
 
 		String[] gameFile = new String[] {
 				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
@@ -1245,12 +1265,18 @@ public class Experiment {
 					runStochasticPolicyPlanner, numTrials, noopAllowed,
 					rewardCalcTypeMap, coopParam, defendParam);
 
+		} else if (args.length > 1) {
+			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
+					noopCost, reward, tau, runValueIteration,
+					runStochasticPolicyPlanner, numTrials, noopAllowed,
+					rewardCalcTypeMap, parameterTypes, args[3]);
 		} else {
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
 					runStochasticPolicyPlanner, numTrials, noopAllowed,
 					rewardCalcTypeMap, parameterTypes);
 		}
+		
 		// Run k-Level
 		if (runKNotQTests) {
 			runner.runKLevelExperiment(Level0Type.RANDOM, numLearningEpisodes);
@@ -1262,7 +1288,13 @@ public class Experiment {
 
 			String[] agentTypes = { "ABCD", "ABDC", "BACD", "BADC", "ABCxD",
 					"BACxD", "AxBCD", "AxBDC", "AxBCxD" };
-			runner.runQESS(numLearningEpisodes, numTrials, 1, agentTypes);
+			if (args.length > 1) {
+				agentTypes = new String[2];
+				agentTypes[0] = args[1];
+				agentTypes[1] = args[2];
+				attempts = 1;
+			}
+			runner.runQESS(numLearningEpisodes, numTrials, attempts, agentTypes);
 
 		}
 
