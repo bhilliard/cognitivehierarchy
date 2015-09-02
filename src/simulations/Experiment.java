@@ -102,7 +102,7 @@ public class Experiment {
 	private RewardCalculator rewardCalc;
 
 	private Map<String, RewardCalculator> rewardCalcMap;
-	private String bashLoopIndex;
+	private String bashLoopIndex = null;
 
 	public Experiment(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoOp, double noopCost, double reward,
@@ -259,6 +259,19 @@ public class Experiment {
 		}
 	}
 
+	public Experiment(String file, int kLevel, double stepCost,
+			boolean incurCostOnNoop, double noopCost, double reward,
+			int tau, boolean runValueIteration,
+			boolean runStochasticPolicyPlanner, int numTrials,
+			boolean noopAllowed,
+			Map<String, RewardCalculatorType> rewardCalcTypeMap,
+			double coopParam, double defendParam, String bashLoopIndex) {
+		this(file, kLevel, stepCost, incurCostOnNoop, noopCost, reward,
+				tau, runValueIteration, runStochasticPolicyPlanner, numTrials,
+				noopAllowed, rewardCalcTypeMap, coopParam, defendParam);
+		this.bashLoopIndex = bashLoopIndex;
+	}
+	
 	public List<GameAnalysis> runKLevelExperiment(Level0Type level0Type,
 			int level0LearningEpisodes) {
 		this.numLearningEpisodes = level0LearningEpisodes;
@@ -682,7 +695,7 @@ public class Experiment {
 			}
 		}
 
-		System.out.println(numAgentTypes);
+		//System.out.println(numAgentTypes);
 
 		this.scores = rewardMatrix;
 
@@ -1207,23 +1220,24 @@ public class Experiment {
 		boolean runKNotQTests = false;
 
 		boolean runNine = false;
-		int numTrials = 100;
-		int numLearningEpisodes = 12500;
+		int numTrials = 10;
+		int numLearningEpisodes = 12000;
 		int attempts = 1;
 
+		String homeFile = System.getProperty("user.dir");
 		String[] gameFile = new String[] {
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json", // 1
-				"../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json", // 2
-				"../MultiAgentGames/resources/worlds/LavaPits.json", // 3
-				"../MultiAgentGames/resources/worlds/TwoAgentsTunnels", // 4
-				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json", // 5
-				"../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json", // 6
-				"../MultiAgentGames/resources/worlds/TwoAgentsNarrowHall_1by10_noWalls.json", // 7
-				"../MultiAgentGames/resources/worlds/TwoAgentsCross.json", // 8
-				"../MultiAgentGames/resources/worlds/TwoAgentsBox_5by5_2Walls.json", // 9
-				"../MultiAgentGames/resources/worlds/TwoAgentsBox_3by5_2Walls.json", // 10
-				"../MultiAgentGames/resources/worlds/TwoAgentsFourCorners_5by5_CrossWalls.json", // 11
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json", // 1
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json", // 2
+				homeFile+"/MultiAgentGames/resources/worlds/LavaPits.json", // 3
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsTunnels", // 4
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json", // 5
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json", // 6
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsNarrowHall_1by10_noWalls.json", // 7
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsCross.json", // 8
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsBox_5by5_2Walls.json", // 9
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsBox_3by5_2Walls.json", // 10
+				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsFourCorners_5by5_CrossWalls.json", // 11
 				"turkey", "coordination", "prisonersdilemma" }; // 12,13,14
 
 		// Choose from a json game file or built-in option from the list above.
@@ -1259,18 +1273,21 @@ public class Experiment {
 					noopCost, reward, tau, runValueIteration,
 					runStochasticPolicyPlanner, numTrials, noopAllowed,
 					rewardCalcType, coopParam, defendParam);
+
+		} else if (args.length > 2) {
+			//System.out.println("Args "+args[2]);
+			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
+					noopCost, reward, tau, runValueIteration,
+					runStochasticPolicyPlanner, numTrials, noopAllowed,
+					rewardCalcTypeMap, coopParam, defendParam, args[2]);
+			
+			//System.out.println("Done Args "+args[2]);
 		} else if (parameterTypes == null) {
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
 					runStochasticPolicyPlanner, numTrials, noopAllowed,
 					rewardCalcTypeMap, coopParam, defendParam);
-
-		} else if (args.length > 1) {
-			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
-					noopCost, reward, tau, runValueIteration,
-					runStochasticPolicyPlanner, numTrials, noopAllowed,
-					rewardCalcTypeMap, parameterTypes, args[3]);
-		} else {
+		}else {
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
 					runStochasticPolicyPlanner, numTrials, noopAllowed,
@@ -1290,8 +1307,8 @@ public class Experiment {
 					"BACxD", "AxBCD", "AxBDC", "AxBCxD" };
 			if (args.length > 1) {
 				agentTypes = new String[2];
-				agentTypes[0] = args[1];
-				agentTypes[1] = args[2];
+				agentTypes[0] = args[0];
+				agentTypes[1] = args[1];
 				attempts = 1;
 			}
 			runner.runQESS(numLearningEpisodes, numTrials, attempts, agentTypes);
@@ -1333,5 +1350,6 @@ public class Experiment {
 		long endTime = System.currentTimeMillis();
 		long totalTime = endTime - startTime;
 		System.out.println("Total time:  " + totalTime / 1000.0 + " s");
+		//System.out.println("BLI: "+runner.bashLoopIndex);
 	}
 }
