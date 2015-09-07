@@ -16,6 +16,7 @@ import simulations.ExperimentRunner.Level0Type;
 import simulations.ExperimentRunner.RewardCalculatorType;
 import behavior.SpecifyNoopCostRewardFunction;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.ValueFunctionInitialization;
 import burlap.behavior.singleagent.ValueFunctionInitialization.ConstantValueFunctionInitialization;
 import burlap.behavior.singleagent.planning.QComputablePlanner;
@@ -24,6 +25,7 @@ import burlap.behavior.singleagent.planning.commonpolicies.CachedPolicy;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.behavior.statehashing.StateHashFactory;
+import burlap.behavior.statehashing.StateHashTuple;
 import burlap.behavior.stochasticgame.GameAnalysis;
 import burlap.behavior.stochasticgame.agents.BRDPlanThenCombinePoliciesAgent;
 import burlap.behavior.stochasticgame.agents.BestResponseToDistributionAgent;
@@ -49,10 +51,13 @@ import burlap.domain.stochasticgames.gridgame.GridGame;
 import burlap.domain.stochasticgames.gridgame.GridGameStandardMechanics;
 import burlap.oomdp.auxiliary.StateParser;
 import burlap.oomdp.auxiliary.common.StateJSONParser;
+import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.core.TerminalFunction;
+import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.stochasticgames.Agent;
 import burlap.oomdp.stochasticgames.AgentType;
+import burlap.oomdp.stochasticgames.GroundedSingleAction;
 import burlap.oomdp.stochasticgames.JointActionModel;
 import burlap.oomdp.stochasticgames.JointReward;
 import burlap.oomdp.stochasticgames.SGDomain;
@@ -103,6 +108,8 @@ public class Experiment {
 
 	private Map<String, RewardCalculator> rewardCalcMap;
 	private String bashLoopIndex;
+	private String[][][][] convergence;
+	private double optimisticValue;
 
 	public Experiment(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoOp, double noopCost, double reward,
@@ -523,6 +530,7 @@ public class Experiment {
 
 		int numAgentTypes = agentTypes.length;
 		double[][][] rewardMatrix = new double[numAgentTypes][numAgentTypes][2];
+		String[][][][] convergenceTestMatrix = new String[numAgentTypes][numAgentTypes][2][numAttempts];
 
 		String outDir = makeOutDir();
 
@@ -550,8 +558,8 @@ public class Experiment {
 					this.optimisticInit = true;
 
 					if (optimisticInit) {
-						ValueFunctionInitialization initValue = (ValueFunctionInitialization) new ConstantValueFunctionInitialization(
-								this.reward - 10);
+						this.optimisticValue = this.reward - 10;
+						ValueFunctionInitialization initValue = (ValueFunctionInitialization) new ConstantValueFunctionInitialization(this.optimisticValue);
 						agent0.setQValueInitializer(initValue);
 						agent1.setQValueInitializer(initValue);
 					}
@@ -566,6 +574,8 @@ public class Experiment {
 								this.temp));
 					}
 					// Learning Phase
+					List<Map<StateHashTuple, List<QValue>>> greenQMaps = new ArrayList<Map<StateHashTuple, List<QValue>>>();
+					List<Map<StateHashTuple, List<QValue>>> blueQMaps = new ArrayList<Map<StateHashTuple, List<QValue>>>();
 					for (int i = 0; i < numLearningEpisodes + numGameTrials; i++) {
 						createWorld();
 						agent0.joinWorld(
@@ -624,16 +634,35 @@ public class Experiment {
 									.get("agent0");
 							rewardMatrix[t1][t0][1] += agentReward
 									.get("agent1");
-							if (a == numAttempts - 1
-									&& i == numLearningEpisodes + numGameTrials
-											- 1) {
-								// System.out.println("DIVIDING MATRIX by "+numAttempts*numGameTrials+" __________________%*^(*#^*(#*$%^)(#$)%(^)#%*(^)#*$)");
-								// System.out.println("0: "+rewardMatrix[t0][t1][0]);
-								// System.out.println("1: "+rewardMatrix[t1][t0][1]);
-								rewardMatrix[t0][t1][0] /= (numAttempts * numGameTrials);
-								rewardMatrix[t1][t0][1] /= (numAttempts * numGameTrials);
+						}
+
+						int convergeWindow = numTrials;
+
+						if (i >= numLearningEpisodes + numGameTrials
+								- convergeWindow - 1) {
+							greenQMaps.add(agent0.getQMapCopy());
+							blueQMaps.add(agent1.getQMapCopy());
+
+							if (i == numLearningEpisodes + numGameTrials - 1) {
+								if (isConverged(greenQMaps, 0.01))
+									convergenceTestMatrix[t0][t1][0][a] = " C ";
+								else
+									convergenceTestMatrix[t0][t1][0][a] = " X ";
+								if (isConverged(blueQMaps, 0.01))
+									convergenceTestMatrix[t1][t0][1][a] = " C ";
+								else
+									convergenceTestMatrix[t1][t0][1][a] = " X ";
+								if (a == numAttempts - 1) {
+									// System.out.println("DIVIDING MATRIX by "+numAttempts*numGameTrials+" __________________%*^(*#^*(#*$%^)(#$)%(^)#%*(^)#*$)");
+									// System.out.println("0: "+rewardMatrix[t0][t1][0]);
+									// System.out.println("1: "+rewardMatrix[t1][t0][1]);
+									rewardMatrix[t0][t1][0] /= (numAttempts * numGameTrials);
+									rewardMatrix[t1][t0][1] /= (numAttempts * numGameTrials);
+
+								}
 							}
 						}
+
 					}
 
 					Policy agent0Policy = new GreedyQPolicy(
@@ -685,13 +714,95 @@ public class Experiment {
 		System.out.println(numAgentTypes);
 
 		this.scores = rewardMatrix;
-
+		this.convergence = convergenceTestMatrix;
 		qMetaString();
 		ESSScores();
 		this.outFile = outDir;
 		writeMetaData();
 
 		return outDir;
+	}
+
+	private boolean isConverged(List<Map<StateHashTuple, List<QValue>>> qMaps,
+			double threshold) {
+
+		if (qMaps.size() < 2) {
+			return false;
+		}
+
+		Map<StateHashTuple, List<QValue>> previousMap = qMaps.get(0);
+		Map<StateHashTuple, List<QValue>> currentMap;
+
+		Map<StateHashTuple, Map<AbstractGroundedAction, List<Double>>> differences = new HashMap<StateHashTuple, Map<AbstractGroundedAction, List<Double>>>();
+
+		double defaultQ = 0;
+		if (this.optimisticInit)
+			defaultQ = this.optimisticValue;
+
+		for (int i = 1; i < qMaps.size(); i++) {
+			currentMap = qMaps.get(i);
+			for (StateHashTuple s : currentMap.keySet()) {
+				if (previousMap.containsKey(s)) {
+					// Get difference in Q-values for all actions.
+					for (QValue currentQVal : currentMap.get(s)) {
+						Double difference = Math.abs(currentQVal.q-defaultQ);
+						for (QValue prevQVal : previousMap.get(s)) {
+							if (currentQVal.a.equals(prevQVal.a)) {
+								// Get difference in Q value for this action.
+								difference = Math.abs(currentQVal.q
+										- prevQVal.q);
+							}
+						}
+						// Set the difference.
+						Map<AbstractGroundedAction, List<Double>> M;
+						List<Double> L;
+						if (differences.containsKey(s)) {
+							if (differences.get(s).containsKey(currentQVal.a)) {
+								M = differences.get(s);
+								L = M.get(currentQVal.a);
+							} else {
+								M = differences.get(s);
+								L = new ArrayList<Double>();
+							}
+						} else {
+							M = new HashMap<AbstractGroundedAction, List<Double>>();
+							L = new ArrayList<Double>();
+						}
+						L.add(difference);
+						M.put(currentQVal.a, L);
+						differences.put(s, M);
+					}
+				} else {
+					// Difference is value of current for all actions.
+					for (QValue currentQVal : currentMap.get(s)) {
+						HashMap<AbstractGroundedAction, List<Double>> M = new HashMap<AbstractGroundedAction, List<Double>>();
+						ArrayList<Double> L = new ArrayList<Double>();
+						L.add(Math.abs(currentQVal.q-defaultQ));
+						M.put(currentQVal.a, L);
+						differences.put(s, M);
+					}
+				}
+			}
+			previousMap = currentMap;
+		}
+
+		// Calculate the average differences. If any is above threshold, return
+		// false.
+		for (StateHashTuple s : differences.keySet()) {
+			for (AbstractGroundedAction a : differences.get(s).keySet()) {
+				double avg = 0.0;
+				for (int i = 0; i < differences.get(s).get(a).size(); i++) {
+					avg += differences.get(s).get(a).get(i);
+				}
+				avg /= (qMaps.size() - 1); // Number of differences is one less
+											// than number of maps.
+				System.out.println("Computed Avg.:" + avg);
+				if (avg > threshold)
+					return false;
+			}
+		}
+
+		return true;
 	}
 
 	protected Map<String, Policy> runLearning(int numEpisodes, String outDir) {
@@ -710,8 +821,9 @@ public class Experiment {
 		this.optimisticInit = true;
 
 		if (optimisticInit) {
+			this.optimisticValue = this.reward -10;
 			ValueFunctionInitialization initValue = (ValueFunctionInitialization) new ConstantValueFunctionInitialization(
-					this.reward - 10);
+					this.optimisticValue);
 			agent.setQValueInitializer(initValue);
 			opponent.setQValueInitializer(initValue);
 		}
@@ -1096,6 +1208,29 @@ public class Experiment {
 				}
 				this.metaText += '\n';
 			}
+
+			this.metaText += "Convergence Matrices:" + '\n';
+			for (int a = 0; a < convergence[0][0][0].length; a++) {
+				this.metaText += "Attempt:" + a + '\n';
+				for (int m = 0; m < 2; m++) {
+					if (m == 0) {
+						this.metaText += "Green Agent:" + '\n';
+						current = writerGreen;
+					} else {
+						this.metaText += "Blue Agent:" + '\n';
+						current = writerBlue;
+					}
+					for (int i = 0; i < this.convergence.length; i++) {
+						this.metaText += i + ": ";
+						for (int j = 0; j < this.convergence.length; j++) {
+							this.metaText += this.convergence[i][j][m][a] + " ";
+							current.print(this.convergence[i][j][m][a] + " ");
+						}
+						this.metaText += '\n';
+					}
+					this.metaText += '\n';
+				}
+			}
 			writerBlue.close();
 			writerGreen.close();
 			this.metaText += '\n';
@@ -1115,6 +1250,8 @@ public class Experiment {
 		this.metaText += "Learning rate: " + this.LEARNING_RATE + '\n';
 		this.metaText += "Optimistic Initialization: " + this.optimisticInit
 				+ '\n';
+		if(this.optimisticInit)
+			this.metaText += "Initialization Value: "+ this.optimisticValue+'\n';
 		this.metaText += "Boltzmann Exploration: " + this.boltzmannExplore
 				+ '\n';
 		if (this.boltzmannExplore)
@@ -1207,8 +1344,8 @@ public class Experiment {
 		boolean runKNotQTests = false;
 
 		boolean runNine = false;
-		int numTrials = 100;
-		int numLearningEpisodes = 12500;
+		int numTrials = 10;
+		int numLearningEpisodes = 7500;
 		int attempts = 1;
 
 		String[] gameFile = new String[] {
@@ -1227,7 +1364,7 @@ public class Experiment {
 				"turkey", "coordination", "prisonersdilemma" }; // 12,13,14
 
 		// Choose from a json game file or built-in option from the list above.
-		String file = gameFile[6];
+		String file = gameFile[7];
 
 		// Execution timer
 		long startTime = System.currentTimeMillis();
@@ -1276,7 +1413,7 @@ public class Experiment {
 					runStochasticPolicyPlanner, numTrials, noopAllowed,
 					rewardCalcTypeMap, parameterTypes);
 		}
-		
+
 		// Run k-Level
 		if (runKNotQTests) {
 			runner.runKLevelExperiment(Level0Type.RANDOM, numLearningEpisodes);
@@ -1286,8 +1423,9 @@ public class Experiment {
 			// runner.runMALearners(numLearningEpisodes, "max");
 			// runner.runQLearners(numLearningEpisodes);
 
-			String[] agentTypes = { "ABCD", "ABDC", "BACD", "BADC", "ABCxD",
-					"BACxD", "AxBCD", "AxBDC", "AxBCxD" };
+			// "ABCD", "ABDC", "BACD", "BADC", "ABCxD", "BACxD", "AxBCD",
+			// "AxBDC", "AxBCxD"
+			String[] agentTypes = { "ABCD", "ABDC", "BACD", "BADC", "ABCxD" };
 			if (args.length > 1) {
 				agentTypes = new String[2];
 				agentTypes[0] = args[1];
