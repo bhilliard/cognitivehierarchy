@@ -60,6 +60,7 @@ import burlap.oomdp.stochasticgames.SGStateGenerator;
 import burlap.oomdp.stochasticgames.SingleAction;
 import burlap.oomdp.stochasticgames.World;
 import burlap.oomdp.stochasticgames.common.ConstantSGStateGenerator;
+import burlap.oomdp.stochasticgames.explorers.SGVisualExplorer;
 import burlap.oomdp.visualizer.Visualizer;
 
 /***
@@ -533,7 +534,7 @@ public class Experiment {
 
 	private String runQESS(int numLearningEpisodes, int numGameTrials,
 			int numAttempts, String[] agentTypes) {
-
+		this.saveLearning = false;
 		int numAgentTypes = agentTypes.length;
 		double[][][] rewardMatrix = new double[numAgentTypes][numAgentTypes][2];
 
@@ -551,7 +552,7 @@ public class Experiment {
 					SGNaiveQLAgent agent0, agent1;
 					StateHashFactory hashFactory = new DiscreteStateHashFactory();
 					StateParser sp = new StateJSONParser(domain);
-					this.saveLearning = true;
+					
 
 					GameAnalysis ga;
 
@@ -659,7 +660,7 @@ public class Experiment {
 					SetStrategyAgent opponentSet = new SetStrategyAgent(
 							this.domain, agent1Policy);
 
-					for (int j = 0; j < 5; j++) {
+					for (int j = 0; j < 2; j++) {
 						createWorld();
 
 						agentSet.joinWorld(
@@ -1174,6 +1175,7 @@ public class Experiment {
 			this.gameWorld = new World(this.domain, jr, tf, sg);
 		} else {
 			// if(this.gameWorld==null){
+			//System.out.println(" WE ARE HERE LOADING "+this.gameFile);
 			this.gameWorld = GridGameWorldLoader.loadWorld(this.gameFile,
 					this.stepCost, this.reward, this.incurCostOnNoop,
 					this.noopCost);
@@ -1185,13 +1187,15 @@ public class Experiment {
 	private String makeOutDir() {
 		Date date = new Date();
 		SimpleDateFormat ft;
+		String outDir;
 		if (bashLoopIndex != null) {
-			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS_"
-					+ bashLoopIndex);
+			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
+			outDir = "/data/people/betsy/" +bashLoopIndex+"_"+ ft.format(date) + "/";
 		} else {
 			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
+			outDir = this.outDirRoot + ft.format(date) + "/";
 		}
-		String outDir = this.outDirRoot + ft.format(date) + "/";
+		
 		File dirFile = new File(outDir);
 		dirFile.mkdir();
 		return outDir;
@@ -1219,29 +1223,31 @@ public class Experiment {
 
 		boolean runKNotQTests = false;
 
-		boolean runNine = false;
+		boolean runNine = true;
 		int numTrials = 10;
-		int numLearningEpisodes = 12000;
+		int numLearningEpisodes = 11000;
 		int attempts = 1;
 
 		String homeFile = System.getProperty("user.dir");
+		
 		String[] gameFile = new String[] {
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json", // 1
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json", // 2
-				homeFile+"/MultiAgentGames/resources/worlds/LavaPits.json", // 3
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsTunnels", // 4
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json", // 5
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json", // 6
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsNarrowHall_1by10_noWalls.json", // 7
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsCross.json", // 8
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsBox_5by5_2Walls.json", // 9
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsBox_3by5_2Walls.json", // 10
-				homeFile+"/MultiAgentGames/resources/worlds/TwoAgentsFourCorners_5by5_CrossWalls.json", // 11
-				"turkey", "coordination", "prisonersdilemma" }; // 12,13,14
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals0.json", // 0
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals1.json", // 1
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsTwoGoals2.json", // 2
+				homeFile+"/../MultiAgentGames/resources/worlds/LavaPits.json", // 3
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsTunnels", // 4
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_2Walls.json", // 5
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsHall_3by5_noWalls.json", // 6
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsNarrowHall_1by7_noWalls.json", // 7
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsCross.json", // 8
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsBox_5by5_2Walls.json", // 9
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsBox_3by5_2Walls.json", // 10
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsManners_5by5.json", // 11
+				homeFile+"/../MultiAgentGames/resources/worlds/TwoAgentsNoManners_5by5.json", // 12
+				"turkey", "coordination", "prisonersdilemma" }; // 13,14,15
 
 		// Choose from a json game file or built-in option from the list above.
-		String file = gameFile[6];
+		String file = gameFile[11];
 
 		// Execution timer
 		long startTime = System.currentTimeMillis();
@@ -1255,38 +1261,36 @@ public class Experiment {
 				RewardCalculatorType.OTHER_REGARDING_NINE);
 		rewardCalcTypeMap.put("agent1",
 				RewardCalculatorType.OTHER_REGARDING_NINE);
+		
 
 		Map<String, String> parameterTypes = null;
+		
 		if (runNine) {
 			parameterTypes = new HashMap<String, String>();
 
-			parameterTypes.put("agent0", "BADC");
-			parameterTypes.put("agent1", "BADC");
+			parameterTypes.put("agent0", "ABDC");
+			parameterTypes.put("agent1", "ABDC");
 		}
 
 		double coopParam = 0.1;
 		double defendParam = 0.5;
+		
 
 		Experiment runner;
-		if (rewardCalcType == null) {
-			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
-					noopCost, reward, tau, runValueIteration,
-					runStochasticPolicyPlanner, numTrials, noopAllowed,
-					rewardCalcType, coopParam, defendParam);
-
-		} else if (args.length > 2) {
+		//run from a script at the command line
+		if (args.length > 2) {
 			//System.out.println("Args "+args[2]);
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
 					runStochasticPolicyPlanner, numTrials, noopAllowed,
 					rewardCalcTypeMap, coopParam, defendParam, args[2]);
 			
-			//System.out.println("Done Args "+args[2]);
+		//if we don't have parameter types, use coop and defend
 		} else if (parameterTypes == null) {
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
 					runStochasticPolicyPlanner, numTrials, noopAllowed,
-					rewardCalcTypeMap, coopParam, defendParam);
+					rewardCalcType, coopParam, defendParam);
 		}else {
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
@@ -1301,7 +1305,7 @@ public class Experiment {
 			// Run Q-Learners
 			// runner.runQVsCooperator(numLearningEpisodes);
 			// runner.runMALearners(numLearningEpisodes, "max");
-			// runner.runQLearners(numLearningEpisodes);
+			runner.runQLearners(numLearningEpisodes);
 
 			String[] agentTypes = { "ABCD", "ABDC", "BACD", "BADC", "ABCxD",
 					"BACxD", "AxBCD", "AxBDC", "AxBCxD" };
@@ -1311,45 +1315,36 @@ public class Experiment {
 				agentTypes[1] = args[1];
 				attempts = 1;
 			}
-			runner.runQESS(numLearningEpisodes, numTrials, attempts, agentTypes);
+			//runner.runQESS(numLearningEpisodes, numTrials, attempts, agentTypes);
 
 		}
 
 		// Visualize Results
-		// Visualizer v = GGVisualizer.getVisualizer(6, 6);
-		// v.addSpecificObjectPainter("agent0", new AgentPolicyObjectPainter(
-		// runner.solvedAgentPolicies.get("agent0").get(5), "agent0"));
-		// v.addSpecificObjectPainter("agent1", new AgentPolicyObjectPainter(
-		// runner.solvedAgentPolicies.get("agent1").get(5), "agent1"));
+		 Visualizer v = GGVisualizer.getVisualizer(6, 6);
+		v.addSpecificObjectPainter("agent0", new AgentPolicyObjectPainter(
+		runner.solvedAgentPolicies.get("agent0").get(5), "agent0"));
+		 v.addSpecificObjectPainter("agent1", new AgentPolicyObjectPainter(
+		 runner.solvedAgentPolicies.get("agent1").get(5), "agent1"));
 
-		// SGVisualExplorer sgve = new SGVisualExplorer(runner.domain, v,
-		// runner.gameWorld.startingState());
-		// sgve.addKeyAction("w", "agent0:north");
-		// sgve.addKeyAction("a", "agent0:west");
-		// sgve.addKeyAction("s", "agent0:noop");
-		// sgve.addKeyAction("d", "agent0:east");
-		// sgve.addKeyAction("x", "agent0:south");
-		// sgve.addKeyAction("i", "agent1:north");
-		// sgve.addKeyAction("j", "agent1:west");
-		// sgve.addKeyAction("k", "agent1:noop");
-		// sgve.addKeyAction("l", "agent1:east");
-		// sgve.addKeyAction(",", "agent1:south");
-		// sgve.initGUI();
-		// new ExperimentVisualizer(v, runner.getDomain(), runner.outFile);
+		SGVisualExplorer sgve = new SGVisualExplorer(runner.domain, v,
+		runner.gameWorld.startingState());
+		sgve.addKeyAction("w", "agent0:north");
+		sgve.addKeyAction("a", "agent0:west");
+		sgve.addKeyAction("s", "agent0:noop");
+		sgve.addKeyAction("d", "agent0:east");
+		sgve.addKeyAction("x", "agent0:south");
+		sgve.addKeyAction("i", "agent1:north");
+		sgve.addKeyAction("j", "agent1:west");
+		sgve.addKeyAction("k", "agent1:noop");
+		sgve.addKeyAction("l", "agent1:east");
+		sgve.addKeyAction(",", "agent1:south");
+		sgve.initGUI();
+		//new ExperimentVisualizer(v, runner.getDomain(), runner.outFile);
 
-		// List<State> states = new ArrayList<State>();
-		// states.add(runner.gameWorld.startingState());
-
-		// PolicyVisualizer vis = new PolicyVisualizer(states,
-		// runner.solvedAgentPolicies.get("agent0").get(0));
-		// VisPlorer vis = new VisPlorer(runner.domain, v,
-		// runner.gameWorld.startingState(),
-		// runner.solvedAgentPolicies.get("agent0").get(1));
-		// vis.initGUI();
 
 		long endTime = System.currentTimeMillis();
 		long totalTime = endTime - startTime;
 		System.out.println("Total time:  " + totalTime / 1000.0 + " s");
-		//System.out.println("BLI: "+runner.bashLoopIndex);
+		System.out.println("BLI: "+runner.bashLoopIndex);
 	}
 }

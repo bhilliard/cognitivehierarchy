@@ -1,6 +1,6 @@
 #!/bin/bash
 TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
-#TYPES=(AxBCD AxBCD)
+#TYPES=(AxBCD)
 # length-1
 LAST=8
 NUMATTEMPTS=50
@@ -9,7 +9,7 @@ for a in `seq 1 $NUMATTEMPTS`;
 do
 	for i in `seq 0 $LAST`;
 	do
-		for j in `seq $i $LAST`;
+		for j in `seq 0 $LAST`;
 		do
 			
 			#echo ${TYPES[$i]} ${TYPES[$j]} $a
