@@ -22,7 +22,7 @@ public class ExperimentRunner {
 	// solved for
 	private int kLevel;
 	boolean runValueIteration, runStochasticPolicyPlanner;
-	RewardCalculatorType rewardCalcType;
+	Map<String, RewardCalculatorType> rewardCalcTypeMap;
 	double cooperativeParameter, defensiveParameter;
 
 	// Game parameters
@@ -35,12 +35,14 @@ public class ExperimentRunner {
 	private int numTrials, numLearningEpisodes;
 	private boolean optimisticInit, boltzmannExplore, saveLearning;
 	private double temp;
-
+	private double optimisticValue;
+	
 	private final double DISCOUNT_FACTOR = 0.99, LEARNING_RATE = 0.01;
 	private final int TIMEOUT = 100;
 	private double tauMin;
 	private double tauMax;
 	private double tauStep;
+	
 
 	public enum Level0Type {
 		RANDOM, Q, NASH_CD, NASH_B
@@ -67,9 +69,8 @@ public class ExperimentRunner {
 					this.stepCost, this.incurCostOnNoop, this.noopCost,
 					this.reward, tau, this.runValueIteration,
 					this.runStochasticPolicyPlanner, this.numTrials,
-					this.noopAllowed, this.rewardCalcType,
-					this.cooperativeParameter, this.defensiveParameter,
-					this.outDir);
+					this.noopAllowed,true, this.rewardCalcTypeMap,
+					this.cooperativeParameter, this.defensiveParameter, this.outDir);
 			exp.runKLevelExperiment(Level0Type.RANDOM);
 		}
 	}
@@ -113,10 +114,13 @@ public class ExperimentRunner {
 			this.saveLearning = Boolean.parseBoolean(prop
 					.getProperty("saveLearning"));
 			String rewardCalcTypeString = prop.getProperty("rewardCalc");
-			if(rewardCalcTypeString.equals("selfish"))
-				this.rewardCalcType = RewardCalculatorType.SELFISH;
-			else if (rewardCalcTypeString.equals("other_regarding"))
-				this.rewardCalcType = RewardCalculatorType.OTHER_REGARDING;
+			if(rewardCalcTypeString.equals("selfish")){
+				this.rewardCalcTypeMap.put("agent0", RewardCalculatorType.SELFISH);
+				this.rewardCalcTypeMap.put("agent1", RewardCalculatorType.SELFISH);
+			}else if (rewardCalcTypeString.equals("other_regarding")){
+				this.rewardCalcTypeMap.put("agent0", RewardCalculatorType.OTHER_REGARDING);
+				this.rewardCalcTypeMap.put("agent1", RewardCalculatorType.OTHER_REGARDING);
+			}
 			this.cooperativeParameter = Double.valueOf(prop.getProperty("cooperativeParameter"));
 			this.defensiveParameter = Double.valueOf(prop.getProperty("defensiveParameter"));
 

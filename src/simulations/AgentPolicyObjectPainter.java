@@ -74,7 +74,11 @@ public class AgentPolicyObjectPainter implements ObjectPainter {
 
 
 			//TODO: Fix color here
-			int agentNum = Integer.valueOf(agentName.split("agent")[0]);
+			int agentNum = 0;
+			if(agentName.compareToIgnoreCase("agent1")==0){
+				agentNum = 1;
+			}
+			
 			Color color = agentColors[agentNum];
 			
 			spp.setActionNameGlyphPainter(actionProb.ga.actionName(),
