@@ -364,7 +364,7 @@ public class MetricPlotter {
 	public static void main(String[] args) {
 
 		MetricPlotter plot = new MetricPlotter(
-				"../2015_08_31_16_14_11/", "",150);
+				"../2015_09_03_14_28_56_562", "",150);
 		plot.plotLearningReward();
 		plot.plotTrialReward();
 		
