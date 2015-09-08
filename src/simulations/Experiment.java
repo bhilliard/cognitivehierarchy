@@ -114,6 +114,7 @@ public class Experiment {
 	private String bashLoopIndex = null;
 	private Policy agent1Policy = null;
 	private Policy agent0Policy = null;
+	private String csvText = "";
 
 	/**
 	 * Basic constructor
@@ -131,9 +132,10 @@ public class Experiment {
 	 * @param noopAllowed
 	 */
 	public Experiment(String gameFile, int kLevel, double stepCost,
-			boolean incurCostOnNoop, double noopCost, double reward, double tau,
-			boolean runValueIteration, boolean runStochasticPolicyPlanner,
-			int numTrials, boolean noopAllowed, boolean saveLearning) {
+			boolean incurCostOnNoop, double noopCost, double reward,
+			double tau, boolean runValueIteration,
+			boolean runStochasticPolicyPlanner, int numTrials,
+			boolean noopAllowed, boolean saveLearning) {
 
 		this.gameFile = gameFile;
 		this.noopAllowed = noopAllowed;
@@ -148,7 +150,7 @@ public class Experiment {
 		this.numTrials = numTrials;
 		this.kLevel = kLevel;
 		this.gridGame = new GridGame();
-		this.rewardCalcMap = new HashMap<String,RewardCalculator>();
+		this.rewardCalcMap = new HashMap<String, RewardCalculator>();
 		if (noopAllowed) {
 
 			this.domain = (SGDomain) gridGame.generateDomain();
@@ -157,12 +159,12 @@ public class Experiment {
 		}
 		this.solvedAgentPolicies = new HashMap<String, Map<Integer, Policy>>();
 
-
 	}
 
 	/**
-	 * Called if not using types for other regarding, can create agents of different
-	 * types (Selfish, simple other regarding)
+	 * Called if not using types for other regarding, can create agents of
+	 * different types (Selfish, simple other regarding)
+	 * 
 	 * @param gameFile
 	 * @param kLevel
 	 * @param stepCost
@@ -179,16 +181,16 @@ public class Experiment {
 	 * @param defendParam
 	 */
 	public Experiment(String gameFile, int kLevel, double stepCost,
-			boolean incurCostOnNoop, double noopCost, double reward, double tau,
-			boolean runValueIteration, boolean runStochasticPolicyPlanner,
-			int numTrials, boolean noopAllowed, boolean saveLearning,
+			boolean incurCostOnNoop, double noopCost, double reward,
+			double tau, boolean runValueIteration,
+			boolean runStochasticPolicyPlanner, int numTrials,
+			boolean noopAllowed, boolean saveLearning,
 			Map<String, RewardCalculatorType> rewardCalcTypeMap,
 			double coopParam, double defendParam) {
 
-		this( gameFile,  kLevel,  stepCost,
-				incurCostOnNoop,  noopCost,  reward, tau,
-				runValueIteration,  runStochasticPolicyPlanner,
-				numTrials, noopAllowed, saveLearning);
+		this(gameFile, kLevel, stepCost, incurCostOnNoop, noopCost, reward,
+				tau, runValueIteration, runStochasticPolicyPlanner, numTrials,
+				noopAllowed, saveLearning);
 		rewardCalcMap = new HashMap<String, RewardCalculator>();
 
 		for (String name : rewardCalcTypeMap.keySet()) {
@@ -224,13 +226,14 @@ public class Experiment {
 	 * @param bashLoopIndex
 	 */
 	public Experiment(String gameFile, int kLevel, double stepCost,
-			boolean incurCostOnNoop, double noopCost, double reward, double tau,
-			boolean runValueIteration, boolean runStochasticPolicyPlanner,
-			int numTrials, boolean noopAllowed, boolean saveLearning, String bashLoopIndex) {
+			boolean incurCostOnNoop, double noopCost, double reward,
+			double tau, boolean runValueIteration,
+			boolean runStochasticPolicyPlanner, int numTrials,
+			boolean noopAllowed, boolean saveLearning, String bashLoopIndex) {
 
 		this(gameFile, kLevel, stepCost, incurCostOnNoop, noopCost, reward,
 				tau, runValueIteration, runStochasticPolicyPlanner, numTrials,
-				noopAllowed,saveLearning);
+				noopAllowed, saveLearning);
 		this.bashLoopIndex = bashLoopIndex;
 	}
 
@@ -252,16 +255,16 @@ public class Experiment {
 	 * @param parameterTypes
 	 */
 	public Experiment(String gameFile, int kLevel, double stepCost,
-			boolean incurCostOnNoop, double noopCost, double reward, double tau,
-			boolean runValueIteration, boolean runStochasticPolicyPlanner,
-			int numTrials, boolean noopAllowed, boolean saveLearning,
+			boolean incurCostOnNoop, double noopCost, double reward,
+			double tau, boolean runValueIteration,
+			boolean runStochasticPolicyPlanner, int numTrials,
+			boolean noopAllowed, boolean saveLearning,
 			Map<String, RewardCalculatorType> rewardCalcTypeMap,
 			Map<String, String> parameterTypes) {
 
-		this(gameFile,  kLevel,  stepCost,
-				incurCostOnNoop,  noopCost,  reward, tau,
-				runValueIteration,  runStochasticPolicyPlanner,
-				numTrials, noopAllowed, saveLearning);
+		this(gameFile, kLevel, stepCost, incurCostOnNoop, noopCost, reward,
+				tau, runValueIteration, runStochasticPolicyPlanner, numTrials,
+				noopAllowed, saveLearning);
 		rewardCalcMap = new HashMap<String, RewardCalculator>();
 
 		for (String name : rewardCalcTypeMap.keySet()) {
@@ -280,8 +283,6 @@ public class Experiment {
 		}
 	}
 
-
-
 	public Experiment(String gameFile, int kLevel, double stepCost,
 			boolean incurCostOnNoop, double noopCost, double reward,
 			double tau, boolean runValueIteration,
@@ -290,14 +291,11 @@ public class Experiment {
 			Map<String, RewardCalculatorType> rewardCalcTypeMap,
 			double cooperativeParameter, double defensiveParameter,
 			String outDir) {
-		this( gameFile,  kLevel,  stepCost,
-				incurCostOnNoop,  noopCost,  reward,
-				tau,  runValueIteration,
-				runStochasticPolicyPlanner,  numTrials,
+		this(gameFile, kLevel, stepCost, incurCostOnNoop, noopCost, reward,
+				tau, runValueIteration, runStochasticPolicyPlanner, numTrials,
 				noopAllowed, saveLearning, rewardCalcTypeMap,
-				cooperativeParameter,  defensiveParameter);
+				cooperativeParameter, defensiveParameter);
 		this.outDirRoot = outDir;
-
 
 	}
 
@@ -349,8 +347,6 @@ public class Experiment {
 				joinWorldOrdered(brAgent, opponent, otherFirst);
 
 				// construct the other agent policies
-
-				List<SingleAction> actions = domain.getSingleActions();
 
 				Policy lowerPolicy;
 
@@ -531,10 +527,10 @@ public class Experiment {
 								agentReward.put(
 										agentKey,
 										agentReward.get(agentKey)
-										+ rewards.get(agentKey));
+												+ rewards.get(agentKey));
 							} else {
 								agentReward
-								.put(agentKey, rewards.get(agentKey));
+										.put(agentKey, rewards.get(agentKey));
 							}
 						}
 					}
@@ -561,14 +557,14 @@ public class Experiment {
 	}
 
 	private String runQESS(int numLearningEpisodes, int numGameTrials,
-			int numAttempts, String[] agentTypes, boolean boltzmannExplore, 
-			double temp, boolean optimisticInit, double optimisticValue, double numToVisualize) {
+			int numAttempts, String[] agentTypes, boolean boltzmannExplore,
+			double temp, boolean optimisticInit, double optimisticValue,
+			double numToVisualize) {
 		this.optimisticInit = optimisticInit;
 		this.optimisticValue = optimisticValue;
 		this.boltzmannExplore = boltzmannExplore;
 		this.temp = temp;
-		
-		
+
 		int numAgentTypes = agentTypes.length;
 		double[][][] rewardMatrix = new double[numAgentTypes][numAgentTypes][2];
 		String[][][][] convergenceTestMatrix = new String[numAgentTypes][numAgentTypes][2][numAttempts];
@@ -588,7 +584,6 @@ public class Experiment {
 					StateHashFactory hashFactory = new DiscreteStateHashFactory();
 					StateParser sp = new StateJSONParser(domain);
 
-
 					GameAnalysis ga;
 
 					agent0 = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
@@ -596,19 +591,16 @@ public class Experiment {
 					agent1 = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
 							this.LEARNING_RATE, hashFactory);
 
-					
-
 					if (optimisticInit) {
 						this.optimisticValue = this.reward - 10;
-						ValueFunctionInitialization initValue = (ValueFunctionInitialization) new ConstantValueFunctionInitialization(this.optimisticValue);
+						ValueFunctionInitialization initValue = (ValueFunctionInitialization) new ConstantValueFunctionInitialization(
+								this.optimisticValue);
 						agent0.setQValueInitializer(initValue);
 						agent1.setQValueInitializer(initValue);
 					}
 
-					
-
 					if (this.boltzmannExplore) {
-						
+
 						agent0.setStrategy(new BoltzmannQPolicy(agent0,
 								this.temp));
 						agent1.setStrategy(new BoltzmannQPolicy(agent1,
@@ -662,7 +654,7 @@ public class Experiment {
 									agentReward.put(
 											agentKey,
 											agentReward.get(agentKey)
-											+ rewards.get(agentKey));
+													+ rewards.get(agentKey));
 								} else {
 									agentReward.put(agentKey,
 											rewards.get(agentKey));
@@ -677,7 +669,7 @@ public class Experiment {
 									.get("agent1");
 						}
 
-						int convergeWindow = numTrials;
+						int convergeWindow = 0;
 
 						if (i >= numLearningEpisodes + numGameTrials
 								- convergeWindow - 1) {
@@ -711,10 +703,12 @@ public class Experiment {
 					agent1Policy = new GreedyQPolicy(
 							(QComputablePlanner) agent1);
 
-					SetStrategyAgent agentSet = new SetStrategyAgent(
+					TransparentSetStrategyAgent agentSet = new TransparentSetStrategyAgent(
 							this.domain, agent0Policy);
-					SetStrategyAgent opponentSet = new SetStrategyAgent(
+					TransparentSetStrategyAgent opponentSet = new TransparentSetStrategyAgent(
 							this.domain, agent1Policy);
+
+					
 
 					for (int j = 0; j < numToVisualize; j++) {
 						createWorld();
@@ -734,10 +728,10 @@ public class Experiment {
 								rewardCalcMap, gameWorld.getRewardModel(),
 								agentSet.getAgentName()));
 						opponentSet
-						.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
-								rewardCalcMap, gameWorld
-								.getRewardModel(), opponentSet
-								.getAgentName()));
+								.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
+										rewardCalcMap, gameWorld
+												.getRewardModel(), opponentSet
+												.getAgentName()));
 
 						ga = this.gameWorld.runGame(TIMEOUT);
 						String outFile = outDir + "Green_Q_" + agentTypes[t0]
@@ -748,11 +742,22 @@ public class Experiment {
 						ga.writeToFile(outFile, sp);
 
 					}
+					// check for C, D, or CD
+					int isCagent = isPolicyC(agentSet);
+					int isDagent = isPolicyD(agentSet);
+
+					int isCopp = isPolicyC(opponentSet);
+					int isDopp = isPolicyD(opponentSet);
+
+					this.csvText += ((NineAgentOtherRegarding)rewardCalcMap.get(agentSet.getAgentName())).getAgentType()
+							+ ", " + ((NineAgentOtherRegarding)rewardCalcMap.get(opponentSet.getAgentName())).getAgentType() + ", "
+							+ isCagent + ", " + isDagent + ", " + isCopp + ", "
+							+ isDopp + ", " + a+"\n";
 				}
 			}
 		}
 
-		//System.out.println(numAgentTypes);
+		// System.out.println(numAgentTypes);
 
 		this.scores = rewardMatrix;
 		this.convergence = convergenceTestMatrix;
@@ -760,7 +765,7 @@ public class Experiment {
 		eSSMetaString();
 		this.outFile = outDir;
 		writeMetaData();
-
+		writeCSV();
 		return outDir;
 	}
 
@@ -786,7 +791,7 @@ public class Experiment {
 				if (previousMap.containsKey(s)) {
 					// Get difference in Q-values for all actions.
 					for (QValue currentQVal : currentMap.get(s)) {
-						Double difference = Math.abs(currentQVal.q-defaultQ);
+						Double difference = Math.abs(currentQVal.q - defaultQ);
 						for (QValue prevQVal : previousMap.get(s)) {
 							if (currentQVal.a.equals(prevQVal.a)) {
 								// Get difference in Q value for this action.
@@ -818,7 +823,7 @@ public class Experiment {
 					for (QValue currentQVal : currentMap.get(s)) {
 						HashMap<AbstractGroundedAction, List<Double>> M = new HashMap<AbstractGroundedAction, List<Double>>();
 						ArrayList<Double> L = new ArrayList<Double>();
-						L.add(Math.abs(currentQVal.q-defaultQ));
+						L.add(Math.abs(currentQVal.q - defaultQ));
 						M.put(currentQVal.a, L);
 						differences.put(s, M);
 					}
@@ -851,32 +856,28 @@ public class Experiment {
 		SGNaiveQLAgent agent, opponent;
 		StateHashFactory hashFactory = new DiscreteStateHashFactory();
 		StateParser sp = new StateJSONParser(domain);
-		
+
 		GameAnalysis ga;
 
 		String[] convergenceTestMatrix = new String[2];
 		List<Map<StateHashTuple, List<QValue>>> greenQMaps = new ArrayList<Map<StateHashTuple, List<QValue>>>();
 		List<Map<StateHashTuple, List<QValue>>> blueQMaps = new ArrayList<Map<StateHashTuple, List<QValue>>>();
 
-
 		agent = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
 				this.LEARNING_RATE, hashFactory);
 		opponent = new SGNaiveQLAgent(domain, this.DISCOUNT_FACTOR,
 				this.LEARNING_RATE, hashFactory);
 
-
 		if (this.optimisticInit) {
-			
+
 			ValueFunctionInitialization initValue = (ValueFunctionInitialization) new ConstantValueFunctionInitialization(
 					this.optimisticValue);
 			agent.setQValueInitializer(initValue);
 			opponent.setQValueInitializer(initValue);
 		}
 
-		
-
 		if (this.boltzmannExplore) {
-			
+
 			agent.setStrategy(new BoltzmannQPolicy(agent, this.temp));
 			opponent.setStrategy(new BoltzmannQPolicy(opponent, this.temp));
 		}
@@ -894,10 +895,10 @@ public class Experiment {
 
 			agent.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
 					rewardCalcMap, gameWorld.getRewardModel(), agent
-					.getAgentName()));
+							.getAgentName()));
 			opponent.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
 					rewardCalcMap, gameWorld.getRewardModel(), opponent
-					.getAgentName()));
+							.getAgentName()));
 			ga = this.gameWorld.runGame(TIMEOUT);
 
 			if (saveLearning) {
@@ -906,11 +907,11 @@ public class Experiment {
 				ga.writeToFile(outFile, sp);
 			}
 
-			//check for convergence
+			// check for convergence
 
-			int convergeWindow = (int) Math.ceil(numLearningEpisodes*.05);
+			int convergeWindow = 0;// (int) Math.ceil(numLearningEpisodes*.05);
 
-			if (i >= numLearningEpisodes- convergeWindow - 1) {
+			if (i >= numLearningEpisodes - convergeWindow - 1) {
 				greenQMaps.add(agent.getQMapCopy());
 				blueQMaps.add(opponent.getQMapCopy());
 
@@ -918,7 +919,7 @@ public class Experiment {
 					if (isConverged(greenQMaps, 0.01))
 						convergenceTestMatrix[0] = " C ";
 					else
-						convergenceTestMatrix[0]= " X ";
+						convergenceTestMatrix[0] = " X ";
 					if (isConverged(blueQMaps, 0.01))
 						convergenceTestMatrix[1] = " C ";
 					else
@@ -929,8 +930,6 @@ public class Experiment {
 
 		}
 
-
-
 		Map<String, Policy> policyMap = new HashMap<String, Policy>();
 		policyMap.put(agent.getAgentName(), new GreedyQPolicy(
 				(QComputablePlanner) agent));
@@ -940,12 +939,13 @@ public class Experiment {
 		return policyMap;
 	}
 
-	public String runQLearners(int numEpisodes, boolean boltzmannExplore, double temp, boolean optimisticInit, double optimisticValue) {
+	public String runQLearners(int numEpisodes, boolean boltzmannExplore,
+			double temp, boolean optimisticInit, double optimisticValue) {
 		this.optimisticInit = optimisticInit;
 		this.optimisticValue = optimisticValue;
 		this.boltzmannExplore = boltzmannExplore;
 		this.temp = temp;
-		
+
 		// Map<String, Double> agentReward = new HashMap<String, Double>();
 		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
 		StateParser sp = new StateJSONParser(domain);
@@ -963,7 +963,7 @@ public class Experiment {
 				policyMap.get("agent0"));
 		SetStrategyAgent opponentSet = new SetStrategyAgent(domain,
 				policyMap.get("agent1"));
-		
+
 		agent0Policy = policyMap.get("agent0");
 		agent1Policy = policyMap.get("agent1");
 
@@ -983,11 +983,11 @@ public class Experiment {
 							.getSingleActions()));
 			agentSet.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
 					rewardCalcMap, gameWorld.getRewardModel(), agentSet
-					.getAgentName()));
+							.getAgentName()));
 			opponentSet
-			.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
-					rewardCalcMap, gameWorld.getRewardModel(),
-					opponentSet.getAgentName()));
+					.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
+							rewardCalcMap, gameWorld.getRewardModel(),
+							opponentSet.getAgentName()));
 
 			ga = this.gameWorld.runGame(TIMEOUT);
 
@@ -1092,7 +1092,7 @@ public class Experiment {
 	public String runQVsCooperator(int numEpisodes) {
 
 		this.numLearningEpisodes = numEpisodes;
-	
+
 		SGNaiveQLAgent opponent;
 		StateHashFactory hashFactory = new DiscreteStateHashFactory();
 		// Map<String, Double> agentReward = new HashMap<String, Double>();
@@ -1172,6 +1172,140 @@ public class Experiment {
 		this.outFile = outDir;
 		writeMetaData();
 		return outDir;
+	}
+
+	public HashMap<String, Double> testPolicyAgainstType(
+			TransparentSetStrategyAgent fixedPolicyAgent, String oppPreference) {
+
+		// create a VI that has given preference
+		StateHashFactory hashFactory = new DiscreteStateHashFactory();
+
+		int otherFirst = 1;
+		if (fixedPolicyAgent.getAgentName().compareToIgnoreCase("agent0") == 0) {
+			otherFirst = 0;
+		}
+
+		createWorld();
+
+		RewardCalculator calc = new NineAgentOtherRegarding(oppPreference);
+
+		BestResponseToDistributionAgent brAgent;
+		brAgent = new BRDPlanThenCombinePoliciesAgent(gameWorld.getDomain(),
+				hashFactory, reward, runValueIteration, calc);
+
+		// Creates a random opponent.
+		// brAgent needs opponent to play a game in order to plan.
+		Agent opponent = fixedPolicyAgent;
+
+		joinWorldOrdered(brAgent, opponent, otherFirst);
+
+		// construct the other agent policies
+		Policy lowerPolicy;
+
+		String opponentName = opponent.getAgentName();
+		String brAgentName = brAgent.getAgentName();
+
+		// if level 0, store policy because it's the random agent
+
+		lowerPolicy = fixedPolicyAgent.getPolicy();
+		Map<Integer, Policy> agentPolicies;
+		// if no policies for this name exist, store policy
+		if (!solvedAgentPolicies.containsKey(opponentName)) {
+			agentPolicies = new HashMap<Integer, Policy>();
+			agentPolicies.put(0, lowerPolicy);
+		} else {
+			agentPolicies = solvedAgentPolicies.get(opponentName);
+			agentPolicies.put(0, lowerPolicy);
+		}
+		solvedAgentPolicies.put(opponentName, agentPolicies);
+		printPolicyCollection();
+
+		// otherwise, pull opponent's policy from previous level
+
+		// construct policy map to pass to Best Response agent
+		// NOTE: If we have more than two opponents, we would need a
+		// loop over opponents here...or maybe earlier
+		Map<String, Map<Integer, Policy>> allOtherAgentPolicies = new HashMap<String, Map<Integer, Policy>>();
+		HashMap<Integer, Policy> levelMap = new HashMap<Integer, Policy>();
+
+		levelMap.put(0, solvedAgentPolicies.get(opponentName).get(0));
+
+		// this is the policies we want to use for learning for this
+		// agent
+		allOtherAgentPolicies.put(opponentName, levelMap);
+
+		// Now create a distribution for this agent
+
+		brAgent.setOtherAgentDetails(allOtherAgentPolicies, 0);
+
+		GameAnalysis ga = this.gameWorld.runGame(TIMEOUT);
+		List<Map<String, Double>> rewards = ga.getJointRewards();
+
+		double oppReward = 0.0;
+		double agentReward = 0.0;
+		for (Map<String, Double> reward : rewards) {
+			oppReward += reward.get(brAgentName);
+			agentReward += reward.get(opponentName);
+		}
+		System.out.println("Agent R: "+agentReward+" Opp R: "+oppReward);
+
+		HashMap<String, Double> rewardVals = new HashMap<String, Double>();
+		rewardVals.put(opponentName, oppReward);
+		rewardVals.put(brAgentName, agentReward);
+
+		return rewardVals;
+
+	}
+
+	public int isPolicyC(TransparentSetStrategyAgent fixedPolicyAgent) {
+
+		HashMap<String, Double> rewardVals = testPolicyAgainstType(
+				fixedPolicyAgent, "AxBCxD");
+		for (String name : rewardVals.keySet()) {
+			if (name.compareToIgnoreCase(fixedPolicyAgent.getAgentName()) != 0) {
+				if (rewardVals.get(name) > 0) {
+					return 1;
+				}
+				return 0;
+			}
+		}
+		return -1;
+	}
+
+	public int isPolicyD(TransparentSetStrategyAgent fixedPolicyAgent) {
+
+		HashMap<String, Double> rewardVals = testPolicyAgainstType(
+				fixedPolicyAgent, "BADC");
+		double policyScore = Double.NaN, oppScore = Double.NaN;
+
+		for (String name : rewardVals.keySet()) {
+			if (name.compareToIgnoreCase(fixedPolicyAgent.getAgentName()) == 0) {
+				policyScore = rewardVals.get(name);
+			} else {
+				oppScore = rewardVals.get(name);
+			}
+		}
+		if (policyScore == Double.NaN || oppScore == Double.NaN) {
+			return -1;
+		} else if (policyScore >= oppScore) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	public void writeCSV() {
+		PrintWriter writer;
+		try {
+			writer = new PrintWriter(outFile + "policyClasses.csv", "UTF-8");
+			writer.print(this.csvText);
+			writer.close();
+			this.csvText = null;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void writeMetaData() {
@@ -1290,10 +1424,12 @@ public class Experiment {
 				this.metaText += "Attempt:" + a + '\n';
 				for (int m = 0; m < 2; m++) {
 					if (m == 0) {
-						this.metaText += "Green Agent Convergence Attempt " + a + ":"+'\n';
+						this.metaText += "Green Agent Convergence Attempt " + a
+								+ ":" + '\n';
 						current = writerGreen;
 					} else {
-						this.metaText += "Blue Agent Convergence Attempt " + a + ":"+'\n';
+						this.metaText += "Blue Agent Convergence Attempt " + a
+								+ ":" + '\n';
 						current = writerBlue;
 					}
 					for (int i = 0; i < this.convergence.length; i++) {
@@ -1326,8 +1462,9 @@ public class Experiment {
 		this.metaText += "Learning rate: " + this.LEARNING_RATE + '\n';
 		this.metaText += "Optimistic Initialization: " + this.optimisticInit
 				+ '\n';
-		if(this.optimisticInit)
-			this.metaText += "Initialization Value: "+ this.optimisticValue+'\n';
+		if (this.optimisticInit)
+			this.metaText += "Initialization Value: " + this.optimisticValue
+					+ '\n';
 		this.metaText += "Boltzmann Exploration: " + this.boltzmannExplore
 				+ '\n';
 		if (this.boltzmannExplore)
@@ -1374,7 +1511,7 @@ public class Experiment {
 			this.gameWorld = new World(this.domain, jr, tf, sg);
 		} else {
 			// if(this.gameWorld==null){
-			//System.out.println(" WE ARE HERE LOADING "+this.gameFile);
+			// System.out.println(" WE ARE HERE LOADING "+this.gameFile);
 			this.gameWorld = GridGameWorldLoader.loadWorld(this.gameFile,
 					this.stepCost, this.reward, this.incurCostOnNoop,
 					this.noopCost);
@@ -1387,12 +1524,15 @@ public class Experiment {
 		Date date = new Date();
 		SimpleDateFormat ft;
 		String outDir;
+		String gameName = this.gameFile.split("\\.")[2];
+		gameName = gameName.substring(gameName.lastIndexOf("/")+1);
 		if (bashLoopIndex != null) {
 			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
-			outDir = "/data/people/betsy/" +bashLoopIndex+"_"+ ft.format(date) + "/";
+			outDir = "/data/people/betsy/M"+gameName+"/" +bashLoopIndex + "_"
+					+ ft.format(date) + "/";
 		} else {
 			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
-			outDir = this.outDirRoot + ft.format(date) + "/";
+			outDir = this.outDirRoot +gameName+"/"+ft.format(date) + "/";
 		}
 
 		File dirFile = new File(outDir);
@@ -1402,101 +1542,105 @@ public class Experiment {
 
 	public static void main(String[] args) {
 
-		//World Parameters
+		// World Parameters
 		String homeFile = System.getProperty("user.dir");
-		homeFile+="/../MultiAgentGames/resources/worlds/";
+		homeFile += "/../MultiAgentGames/resources/worlds/";
 		String[] gameFile = new String[] {
-				homeFile+"TwoAgentsTwoGoals0.json", // 0
-				homeFile+"TwoAgentsTwoGoals1.json", // 1
-				homeFile+"TwoAgentsTwoGoals2.json", // 2
-				homeFile+"LavaPits.json", // 3
-				homeFile+"TwoAgentsTunnels", // 4
-				homeFile+"TwoAgentsHall_3by5_2Walls.json", // 5
-				homeFile+"TwoAgentsHall_3by5_noWalls.json", // 6
-				homeFile+"TwoAgentsNarrowHall_1by7_noWalls.json", // 7
-				homeFile+"TwoAgentsCross.json", // 8
-				homeFile+"TwoAgentsBox_5by5_2Walls.json", // 9
-				homeFile+"TwoAgentsBox_3by5_2Walls.json", // 10
-				homeFile+"TwoAgentsManners_5by5.json", // 11
-				homeFile+"TwoAgentsNoManners_5by5.json", // 12
+				homeFile + "TwoAgentsTwoGoals0.json", // 0
+				homeFile + "TwoAgentsTwoGoals1.json", // 1
+				homeFile + "TwoAgentsTwoGoals2.json", // 2
+				homeFile + "LavaPits.json", // 3
+				homeFile + "TwoAgentsTunnels", // 4
+				homeFile + "TwoAgentsHall_3by5_2Walls.json", // 5
+				homeFile + "TwoAgentsHall_3by5_noWalls.json", // 6
+				homeFile + "TwoAgentsNarrowHall_1by7_noWalls.json", // 7
+				homeFile + "TwoAgentsCross.json", // 8
+				homeFile + "TwoAgentsBox_5by5_2Walls.json", // 9
+				homeFile + "TwoAgentsBox_3by5_2Walls.json", // 10
+				homeFile + "TwoAgentsManners_5by5.json", // 11
+				homeFile + "TwoAgentsNoManners_5by5.json", // 12
 				"turkey", "coordination", "prisonersdilemma" }; // 13,14,15
 
 		// Choose from a json game file or built-in option from the list above.
-		String file = gameFile[11];
-
+		String file = gameFile[8];
+		//System.out.println(args[2]);
+		if(args.length>3){
+			file = gameFile[Integer.valueOf(args[3])];
+		}
+	
 		double reward = 50.0; // Set this to set the rewards for goals.
 		double stepCost = 0.0;
 		double noopCost = 0.0;
 		boolean incurCostOnNoop = true;
 		boolean noopAllowed = true;
 
-		/////Experiment Parameters/////
-		//determine what experiments to run
+		// ///Experiment Parameters/////
+		// determine what experiments to run
 		boolean runKLevel = false;
-		boolean runTwoQLearners_TypesOptional = true;
-		boolean runESS = false;
+		boolean runTwoQLearners_TypesOptional = false;
+		boolean runESS = true;
 
-		int numTrials = 1;
-		int numLearningEpisodes = 12500;
+		int numTrials = 100;
+		int numLearningEpisodes = 10000;
 		int attempts = 1;
-		
+
 		int numToVisualize = 1;
 
-		//pick a visualizer IF <=1 args true
-		boolean showPolicyExplorer = true;
+		// pick a visualizer IF <=1 args true
+		boolean showPolicyExplorer = false;
 		boolean showGameReplays = false;
 		boolean saveLearning = showGameReplays || false;
 
-		/////////Agent Parameters//////
-		//K LEVEL PARAMETERS
+		// ///////Agent Parameters//////
+		// K LEVEL PARAMETERS
 		boolean runValueIteration = true; // set to false to run the
 
 		// BoundedRTDP agent instead on ValueIteration
 		// handles when policies are stochastically combined
-		boolean runStochasticPolicyPlanner = true; 
+		boolean runStochasticPolicyPlanner = true;
 		// This is the level the "smartest" agent will be.
-		int kLevel = 5; 
-		//defines the dist. over lower levels that the agent assumes.
-		int tau = 3; 
+		int kLevel = 5;
+		// defines the dist. over lower levels that the agent assumes.
+		int tau = 3;
 
-
-		//Q PARAMETERS
+		// Q PARAMETERS
 		boolean boltzmannExplore = true;
 		double temp = 0.5;
 		boolean optimisticInit = true;
-		double optimisticValue = reward-10.0;
-		
-		
-		//Set these if running two Q learners
-		//only one of these can be true...
+		double optimisticValue = reward - 10.0;
+
+		// Set these if running two Q learners
+		// only one of these can be true...
 		boolean runNormalQLearners = false;
 		boolean runOtherRegardingOrderedPref = true;
 		boolean runSimpleOtherRegarding = false;
 
-		//set if runSimpleOtherRegarding && runTwoQLearners_TypesOptional
+		// set if runSimpleOtherRegarding && runTwoQLearners_TypesOptional
 		double coopParam = 0.1;
 		double defendParam = 0.5;
 
-		//set if runOtherRegardingOrderedPref && runTwoQLearners_TypesOptional
-		String agent0OrderType = "ABCxD";
-		String agent1OrderType = "ABCxD";
+		// set if runOtherRegardingOrderedPref && runTwoQLearners_TypesOptional
+		String agent0OrderType = "ABDC";
+		String agent1OrderType = "BADC";
 
-		//set this if running ESS
-		String[] agentTypes = {"ABCD", "ABDC"};
-		//"ABCD", "ABDC", "BACD", "BADC", "ABCxD", "BACxD", "AxBCD", "AxBDC", "AxBCxD"
+		// set this if running ESS
+		String[] agentTypes = { "ABCD", "ABDC" };
+		// "ABCD", "ABDC", "BACD", "BADC", "ABCxD", "BACxD", "AxBCD", "AxBDC",
+		// "AxBCxD"
 
-		////////////////////////DON'T CHANGE ANYTHING BELOW HERE TO EDIT PARAMETERS////////////////////
+		// //////////////////////DON'T CHANGE ANYTHING BELOW HERE TO EDIT
+		// PARAMETERS////////////////////
 		// Execution timer
 		long startTime = System.currentTimeMillis();
 
 		Map<String, RewardCalculatorType> rewardCalcTypeMap = new HashMap<String, RewardCalculatorType>();
 		Map<String, String> parameterTypes = null;
 
-		if(runNormalQLearners){
-			rewardCalcTypeMap.put("agent0",RewardCalculatorType.SELFISH);
-			rewardCalcTypeMap.put("agent1",RewardCalculatorType.SELFISH);
+		if (runNormalQLearners) {
+			rewardCalcTypeMap.put("agent0", RewardCalculatorType.SELFISH);
+			rewardCalcTypeMap.put("agent1", RewardCalculatorType.SELFISH);
 
-		}else if(runOtherRegardingOrderedPref || runESS){
+		} else if (runOtherRegardingOrderedPref || runESS) {
 
 			rewardCalcTypeMap.put("agent0",
 					RewardCalculatorType.OTHER_REGARDING_NINE);
@@ -1508,7 +1652,7 @@ public class Experiment {
 				parameterTypes.put("agent0", agent0OrderType);
 				parameterTypes.put("agent1", agent1OrderType);
 			}
-		}else if(runSimpleOtherRegarding){
+		} else if (runSimpleOtherRegarding) {
 			rewardCalcTypeMap.put("agent0",
 					RewardCalculatorType.OTHER_REGARDING);
 			rewardCalcTypeMap.put("agent1",
@@ -1517,64 +1661,77 @@ public class Experiment {
 		}
 
 		Experiment runner;
-		//run from a script at the command line
+		// run from a script at the command line
 		if (args.length > 2) {
-			//System.out.println("Args "+args[2]);
+			// System.out.println("Args "+args[2]);
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
-					runStochasticPolicyPlanner, numTrials, noopAllowed, saveLearning, args[2]);
+					runStochasticPolicyPlanner, numTrials, noopAllowed,
+					saveLearning, args[2]);
 
-		}else if(runESS){
+		} else if (runESS) {
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
-					runStochasticPolicyPlanner, numTrials, noopAllowed, saveLearning);
-		}else if(runOtherRegardingOrderedPref) {
+					runStochasticPolicyPlanner, numTrials, noopAllowed,
+					saveLearning);
+		} else if (runOtherRegardingOrderedPref) {
 
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
-					runStochasticPolicyPlanner, numTrials, noopAllowed, saveLearning,
-					rewardCalcTypeMap, parameterTypes);
+					runStochasticPolicyPlanner, numTrials, noopAllowed,
+					saveLearning, rewardCalcTypeMap, parameterTypes);
 
-			//runSimpleOtherRegarding
-		}else{
+			// runSimpleOtherRegarding
+		} else {
 			runner = new Experiment(file, kLevel, stepCost, incurCostOnNoop,
 					noopCost, reward, tau, runValueIteration,
-					runStochasticPolicyPlanner, numTrials, noopAllowed, saveLearning,
-					rewardCalcTypeMap,coopParam,defendParam);
+					runStochasticPolicyPlanner, numTrials, noopAllowed,
+					saveLearning, rewardCalcTypeMap, coopParam, defendParam);
 		}
 
 		// Run ESS from script
-		if (args.length > 2){
+		if (args.length > 2) {
 			agentTypes = new String[2];
 			agentTypes[0] = args[0];
 			agentTypes[1] = args[1];
 			attempts = 1;
-			runner.runQESS(numLearningEpisodes, numTrials, attempts, agentTypes, boltzmannExplore, temp, optimisticInit, optimisticValue,numToVisualize);
+			runner.runQESS(numLearningEpisodes, numTrials, attempts,
+					agentTypes, boltzmannExplore, temp, optimisticInit,
+					optimisticValue, numToVisualize);
 
-		}else if(runKLevel) {
+		} else if (runKLevel) {
 			runner.runKLevelExperiment(Level0Type.RANDOM, numLearningEpisodes);
-		} else if(runESS) {
-			
-			runner.runQESS(numLearningEpisodes, numTrials, attempts, agentTypes, boltzmannExplore, temp, optimisticInit, optimisticValue,numToVisualize);
-			
-		}else if(runTwoQLearners_TypesOptional){
-			runner.runQLearners(numLearningEpisodes, boltzmannExplore, temp, optimisticInit, optimisticValue);
+		} else if (runESS) {
+
+			runner.runQESS(numLearningEpisodes, numTrials, attempts,
+					agentTypes, boltzmannExplore, temp, optimisticInit,
+					optimisticValue, numToVisualize);
+
+		} else if (runTwoQLearners_TypesOptional) {
+			runner.runQLearners(numLearningEpisodes, boltzmannExplore, temp,
+					optimisticInit, optimisticValue);
 		}
 
 		// Maybe visualize Results
-		if(args.length <= 2){
+		if (args.length <= 2) {
 			Visualizer v = GGVisualizer.getVisualizer(6, 6);
-			if(showPolicyExplorer){
-				if(runner.agent0Policy==null){
-					v.addSpecificObjectPainter("agent0", new AgentPolicyObjectPainter(
-							runner.solvedAgentPolicies.get("agent0").get(kLevel), "agent0"));
-					v.addSpecificObjectPainter("agent1", new AgentPolicyObjectPainter(
-							runner.solvedAgentPolicies.get("agent1").get(kLevel), "agent1"));
-				}else{
-					v.addSpecificObjectPainter("agent0", new AgentPolicyObjectPainter(
-							runner.agent0Policy, "agent0"));
-					v.addSpecificObjectPainter("agent1", new AgentPolicyObjectPainter(
-							runner.agent1Policy, "agent1"));	
+			if (showPolicyExplorer) {
+				if (runner.agent0Policy == null) {
+					v.addSpecificObjectPainter("agent0",
+							new AgentPolicyObjectPainter(
+									runner.solvedAgentPolicies.get("agent0")
+											.get(kLevel), "agent0"));
+					v.addSpecificObjectPainter("agent1",
+							new AgentPolicyObjectPainter(
+									runner.solvedAgentPolicies.get("agent1")
+											.get(kLevel), "agent1"));
+				} else {
+					v.addSpecificObjectPainter("agent0",
+							new AgentPolicyObjectPainter(runner.agent0Policy,
+									"agent0"));
+					v.addSpecificObjectPainter("agent1",
+							new AgentPolicyObjectPainter(runner.agent1Policy,
+									"agent1"));
 				}
 
 				SGVisualExplorer sgve = new SGVisualExplorer(runner.domain, v,
@@ -1590,7 +1747,7 @@ public class Experiment {
 				sgve.addKeyAction("l", "agent1:east");
 				sgve.addKeyAction(",", "agent1:south");
 				sgve.initGUI();
-			}else if(showGameReplays){
+			} else if (showGameReplays) {
 				new ExperimentVisualizer(v, runner.getDomain(), runner.outFile);
 			}
 		}
@@ -1600,5 +1757,4 @@ public class Experiment {
 		System.out.println("Total time:  " + totalTime / 1000.0 + " s");
 	}
 
-	
 }

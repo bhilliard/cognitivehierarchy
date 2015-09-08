@@ -71,6 +71,10 @@ public class NineAgentOtherRegarding extends RewardCalculator {
 			return myReward;
 		}
 	}
+	
+	public String getAgentType(){
+		return agentType;
+	}
 
 }
 
