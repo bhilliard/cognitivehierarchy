@@ -59,13 +59,14 @@ public class ExperimentRunner {
 	public void runExperiment() {
 
 		Date date = new Date();
+		String experimentName = "";
 		SimpleDateFormat ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 		this.outDir = "../Experiments_" + ft.format(date) + "/";
 		File dirFile = new File(outDir);
 		dirFile.mkdir();
 
 		for (double tau = this.tauMin; tau <= this.tauMax; tau += this.tauStep) {
-			Experiment exp = new Experiment(this.gameFile, this.kLevel,
+			Experiment exp = new Experiment(this.gameFile, experimentName, this.kLevel,
 					this.stepCost, this.incurCostOnNoop, this.noopCost,
 					this.reward, tau, this.runValueIteration,
 					this.runStochasticPolicyPlanner, this.numTrials,

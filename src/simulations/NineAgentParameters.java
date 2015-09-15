@@ -22,7 +22,7 @@ public class NineAgentParameters extends RewardParameters {
 			double[] params = {1.0,0.0,0.25,0.0, 0.0};
 			return params;
 		}else if(agentType.compareTo("BACxD")==0){
-			double[] params = {1.0,0.0,0.0,-.25, 0.0};
+			double[] params = {1.0,0.0,0.0,.25, 0.0};
 			return params;
 		}else if(agentType.compareTo("ABDC")==0){
 			double[] params = {1.0,0.0,-.25,0.0, 0.0};
