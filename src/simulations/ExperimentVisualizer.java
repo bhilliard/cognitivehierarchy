@@ -39,7 +39,9 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 		File[] matchFiles = new File(dirName).listFiles();
 		StateParser sp = new StateJSONParser(domain);
 		ArrayList<GameAnalysis> gas = new ArrayList<GameAnalysis>();
-
+		System.out.println("dirName: "+dirName);
+		System.out.println(" MF sz: "+matchFiles.length);
+		
 		for (File match : matchFiles) {
 			if (match.isDirectory()
 					&& (showLearning == match.getName().contains("earning"))) {
@@ -49,6 +51,11 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 							sp);
 					gas.add(ga);
 				}
+			}else if (showLearning == match.getName().contains("earning")) {
+				GameAnalysis ga = GameAnalysis.parseFileIntoGA(dirName+ match.getName(), domain,sp);
+				//System.out.println("Adding: "+dirName+ match.getName());
+				gas.add(ga);
+				
 			}
 		}
 		return gas;
@@ -81,17 +88,19 @@ public class ExperimentVisualizer extends GameSequenceVisualizer {
 						episodesListModel.addElement(trial.getName());
 					}
 				}
+			}else if(match.isFile()&& (showLearning == match.getName().contains("earning"))){
+				episodesListModel.addElement(match.getName());
 			}
 		}
 	}
 
 	public static void main(String[] args) {
 
-		String dirName = "../TwoAgentsNoCompromise_2by5/2015_09_15_09_37_02_766/";
+		String dirName = "../TwoAgentsNoCompromise_2by5/2015_09_16_13_33_37_793/Green_Q_BADC_Blue_Q_ABDC_Attempt_0";
 		if (!dirName.endsWith("/"))
 			dirName += "/";
 		new ExperimentVisualizer(GGVisualizer.getVisualizer(7, 7),
-				(SGDomain) new GridGame().generateDomain(), dirName, false);
+				(SGDomain) new GridGame().generateDomain(), dirName,true);
 		// new ExperimentVisualizer(GGVisualizer.getVisualizer(6, 6),
 		// (SGDomain) new GridGame().generateDomain(), dirName, true);
 	}

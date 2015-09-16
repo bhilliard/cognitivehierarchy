@@ -169,17 +169,24 @@ public class MetricPlotter {
 		StateParser sp = new StateJSONParser(this.domain);
 		int index;
 		for (File match : matchFiles) {
-			if (match.isDirectory()) {
+			if (match.isDirectory() && match.getName().contains("Q")) {
 				for (File trial : match.listFiles()) {
-					GameAnalysis ga = GameAnalysis.parseFileIntoGA(this.inDir
-							+ match.getName() + "/" + trial.getName(),
-							this.domain, sp);
-					String[] split = trial.getName().split("_");
-					index = Integer.valueOf(split[split.length - 1].split("\\.")[0]);
-					if (match.getName().contains("earning"))
-						this.gasL.put(index, ga);
-					else
-						this.gas.put(index, ga);
+					if(!trial.getName().contains(".jpeg")){
+						System.out.println(this.inDir+ match.getName() + "/" + trial.getName());
+						GameAnalysis ga = GameAnalysis.parseFileIntoGA(this.inDir
+								+ match.getName() + "/" + trial.getName(),
+								this.domain, sp);
+						String[] split = trial.getName().split("_");
+						index = Integer.valueOf(split[split.length - 1].split("\\.")[0]);
+						
+						if (match.getName().contains("earning") || trial.getName().contains("earning")){
+							System.out.println("Index: "+index);
+							this.gasL.put(index, ga);
+						}else{
+							this.gas.put(index, ga);
+
+						}
+					}
 				}
 			}
 		}
@@ -223,6 +230,7 @@ public class MetricPlotter {
 				agent0Sum += reward.get("agent0");
 				agent1Sum += reward.get("agent1");
 			}
+			System.out.println("Rewards "+agent0Sum+" "+agent1Sum);
 
 			if (agent0q.size() == this.queueSize) {
 				agent1q.removeFirst();
@@ -343,11 +351,11 @@ public class MetricPlotter {
 		frame.setVisible(true);
 
 	}
-	
+
 	public void saveToFile(JFreeChart chart, String fileName){
 		saveToFile(chart, fileName, 700, 500);
 	}
-	
+
 	public void saveToFile(JFreeChart chart, String fileName, int width, int height){
 		try {
 			File outFile = new File(inDir+fileName+".jpeg");
@@ -364,12 +372,12 @@ public class MetricPlotter {
 	public static void main(String[] args) {
 
 		MetricPlotter plot = new MetricPlotter(
-				"../2015_09_03_14_28_56_562", "",150);
+				"../TwoAgentsHall_3by5_noWalls/2015_09_16_12_43_49_059", "",150);
 		plot.plotLearningReward();
-		plot.plotTrialReward();
-		
+		//plot.plotTrialReward();
+
 		// MetricPlotter plot = new MetricPlotter(
 		// "../2015_08_18_12_04_28", "");
-//		plot.plotTauExperiment();
+		//		plot.plotTauExperiment();
 	}
 }
