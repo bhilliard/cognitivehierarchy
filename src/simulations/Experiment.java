@@ -121,6 +121,7 @@ public class Experiment {
 	private final int TIMEOUT = 100;
 
 	private String[][][][] convergence;
+	private String agentRewards = "Agent Test Rewards: \n";
 
 	/**
 	 * Basic constructor
@@ -594,6 +595,7 @@ public class Experiment {
 			int numAttempts, String[] agentPrefTypes, boolean boltzmannExplore,
 			double temp, boolean optimisticInit, double optimisticValue,
 			double numToVisualize) {
+
 		this.optimisticInit = optimisticInit;
 		this.optimisticValue = optimisticValue;
 		this.boltzmannExplore = boltzmannExplore;
@@ -609,6 +611,9 @@ public class Experiment {
 
 		experimentMetaString();
 		gameMetaString();
+		
+		String agent0Rewards="";
+		String agent1Rewards = "";
 
 		//these loops should change for the correct ESS
 		for (int a = 0; a < numAttempts; a++) {
@@ -618,6 +623,8 @@ public class Experiment {
 					SGNaiveQLAgent agent0, agent1;
 					StateHashFactory hashFactory = new DiscreteStateHashFactory();
 					StateParser sp = new StateJSONParser(domain);
+
+					ArrayList<Map<String,Double>> testRewards = new ArrayList<Map<String,Double>>();
 
 					GameAnalysis ga;
 
@@ -657,7 +664,7 @@ public class Experiment {
 						//this controls what start state the agents see
 						//note, we have to have them see the true start state first
 						//so that names and types for the agents exist 
-						if(i!=0){
+						if(i!=0 && i%100!=0){
 							createWorld(runWithRandomStartStates,agentTypes);
 						}else{
 							createWorld();
@@ -704,12 +711,9 @@ public class Experiment {
 						Map<String, Double> agentReward = new HashMap<String, Double>();
 
 						for (Map<String, Double> rewards : jointRewards) {
-							if(!rewards.containsKey("agent0")){
-								@SuppressWarnings("unused")
-								int x = 1;
-							}
+
 							for (String agentKey : rewards.keySet()) {
-								
+
 								if (agentReward.containsKey(agentKey)) {
 									agentReward.put(
 											agentKey,
@@ -722,6 +726,8 @@ public class Experiment {
 							}
 						}
 
+
+						//track the reward for last n games
 						if (i > numLearningEpisodes) {
 							rewardMatrix[t0][t1][0] += agentReward
 									.get("agent0");
@@ -756,7 +762,62 @@ public class Experiment {
 							}
 						}
 
+						if(i%100==0){
+							
+							agent0Policy = new GreedyQPolicy(
+									(QComputablePlanner) agent0);
+							agent1Policy = new GreedyQPolicy(
+									(QComputablePlanner) agent1);
+
+
+
+							TransparentSetStrategyAgent agentSet = new TransparentSetStrategyAgent(
+									this.domain, agent0Policy);
+
+							TransparentSetStrategyAgent opponentSet = new TransparentSetStrategyAgent(
+									this.domain, agent1Policy);
+							
+							setupGameWithFixedAgents(agentSet, opponentSet);
+
+							jointRewards = ga
+									.getJointRewards();
+
+							agentReward = new HashMap<String, Double>();
+
+							for (Map<String, Double> rewards : jointRewards) {
+
+								for (String agentKey : rewards.keySet()) {
+
+									if (agentReward.containsKey(agentKey)) {
+										agentReward.put(
+												agentKey,
+												agentReward.get(agentKey)
+												+ rewards.get(agentKey));
+									} else {
+										agentReward.put(agentKey,
+												rewards.get(agentKey));
+									}
+								}
+							}
+							testRewards.add(agentReward);
+						}
+
 					}
+					
+					agent0Rewards = "agent0";
+					agent1Rewards = "agent1";
+					
+					for(Map<String,Double> rewards: testRewards){
+						agent0Rewards+=","+rewards.get("agent0");
+						agent1Rewards+=","+rewards.get("agent1");
+					}
+					agent0Rewards+=","+a;
+					agent1Rewards+=","+a;
+					
+					this.agentRewards +=agent0Rewards+'\n'+agent1Rewards;
+					
+					//TODO: Print the two strings to file somehow!
+					
 
 					agent0Policy = new GreedyQPolicy(
 							(QComputablePlanner) agent0);
@@ -772,37 +833,19 @@ public class Experiment {
 							this.domain, agent1Policy);
 
 
+					setupGameWithFixedAgents(agentSet,opponentSet);
 
-					for (int j = 0; j < numToVisualize; j++) {
-						createWorld();
+					ga = this.gameWorld.runGame(TIMEOUT);
+					String outFile = outDir + "Green_Q_" + agentPrefTypes[t0]
+							+ "_Blue_Q_" + agentPrefTypes[t1] + "_Attempt_" + a
+							+ "/" + "G_" + agentPrefTypes[t0] + "_B_"
+							+ agentPrefTypes[t1] + "_Fixed";
 
-						agentSet.joinWorld(
-								this.gameWorld,
-								new AgentType(GridGame.CLASSAGENT, this.domain
-										.getObjectClass(GridGame.CLASSAGENT),
-										this.domain.getSingleActions()));
-						opponentSet.joinWorld(
-								this.gameWorld,
-								new AgentType(GridGame.CLASSAGENT, this.domain
-										.getObjectClass(GridGame.CLASSAGENT),
-										this.domain.getSingleActions()));
+					ga.writeToFile(outFile, sp);
 
-						agentSet.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
-								rewardCalcMap, gameWorld.getRewardModel(),
-								agentSet.getAgentName()));
-						opponentSet.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
-								rewardCalcMap, gameWorld
-								.getRewardModel(), opponentSet.getAgentName()));
 
-						ga = this.gameWorld.runGame(TIMEOUT);
-						String outFile = outDir + "Green_Q_" + agentPrefTypes[t0]
-								+ "_Blue_Q_" + agentPrefTypes[t1] + "_Attempt_" + a
-								+ "/" + "G_" + agentPrefTypes[t0] + "_B_"
-								+ agentPrefTypes[t1] + "_Fixed_" + j;
 
-						ga.writeToFile(outFile, sp);
 
-					}
 					// check for C, D, or CD
 
 					int isCagent = isPolicyC(outDir, agentSet);
@@ -823,15 +866,44 @@ public class Experiment {
 		}
 
 		// System.out.println(numAgentTypes);
-
+		
 		this.scores = rewardMatrix;
 		this.convergence = convergenceTestMatrix;
 		qMetaString();
 		eSSMetaString();
 		this.outFile = outDir;
+		agentRewardsWriter();
 		writeMetaData();
 		writeCSV();
 		return outDir;
+	}
+
+	private void setupGameWithFixedAgents(Agent agentSet, Agent opponentSet){
+
+		createWorld();
+
+		agentSet.joinWorld(
+				this.gameWorld,
+				new AgentType(GridGame.CLASSAGENT, this.domain
+						.getObjectClass(GridGame.CLASSAGENT),
+						this.domain.getSingleActions()));
+		opponentSet.joinWorld(
+				this.gameWorld,
+				new AgentType(GridGame.CLASSAGENT, this.domain
+						.getObjectClass(GridGame.CLASSAGENT),
+						this.domain.getSingleActions()));
+
+		agentSet.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
+				rewardCalcMap, gameWorld.getRewardModel(),
+				agentSet.getAgentName()));
+		opponentSet.setInternalRewardFunction(new RewardCalculatingJointRewardFunction(
+				rewardCalcMap, gameWorld
+				.getRewardModel(), opponentSet.getAgentName()));
+
+
+
+
+
 	}
 
 
@@ -1306,7 +1378,7 @@ public class Experiment {
 
 		GameAnalysis ga = this.gameWorld.runGame(TIMEOUT);
 		StateParser sp = new StateJSONParser(domain);
-		
+
 		String outFile;
 		if(otherFirst==0){
 			outFile = outDir + "Green_FxdPi_Blue_VIw"
@@ -1394,6 +1466,21 @@ public class Experiment {
 		}
 	}
 
+	public void agentRewardsWriter() {
+		PrintWriter writer;
+		System.out.println("Writing Rewards: "+outFile+" "+agentRewards);
+		try {
+			writer = new PrintWriter(outFile + "agentRewards.csv", "UTF-8");
+			writer.print(this.agentRewards);
+			writer.close();
+			this.agentRewards = null;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void writeMetaData() {
 		PrintWriter writer;
 		try {
@@ -1716,7 +1803,7 @@ public class Experiment {
 
 		//TODO: start editing here (THIS IS JUST SO I CAN FIND THE SPOT!!!)
 		// Choose from a json game file or built-in option from the list above.
-		String file = gameFile[6];
+		String file = gameFile[5];
 		if(args.length>3){
 			file = gameFile[Integer.valueOf(args[3])];
 		}
@@ -1735,7 +1822,7 @@ public class Experiment {
 		boolean runESS = true;
 
 		int numTrials = 100;
-		int numLearningEpisodes = 15000;
+		int numLearningEpisodes = 1000;
 		int attempts = 1;
 
 		int numToVisualize = 1;
