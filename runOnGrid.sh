@@ -1,25 +1,40 @@
 #!/bin/bash
-#TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
-TYPES=(ABDC AxBCxD)
-# length-1
-LAST=1
-NUMATTEMPTS=1
-#NUMGAMES=3
-#GAMES=('6' '11' '12' '10')
-NUMGAMES=1
-GAMES=('6' '11')
+# USE THIS FOR SYMMETRIC GAMES
 
-for k in `seq 0 $NUMGAMES`;
+#GAMES=('6')
+GAMES=('6')
+
+#TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
+TYPES=(ABCD ABDC BACD BADC AxBCxD)
+
+#true will run with random start states, false don't
+BOOLS=('true')
+
+NUMATTEMPTS=2
+
+#don't touch these parameters, they just control the ends of the loops
+# length-1
+NUMGAMES=${#GAMES[@]}
+LASTGAME=`expr $NUMGAMES - 1`
+NUMTYPES=${#TYPES[@]}
+LAST=`expr $NUMTYPES - 1`
+NUMBOOLS=${#BOOLS[@]}
+LASTBOOL=`expr $NUMBOOLS - 1`
+
+#don't use this loop until the filesindicate which condition is being used
+for b in `seq 0 $LASTBOOL`;
 do
-	for a in `seq 1 $NUMATTEMPTS`;
+	for k in `seq 0 $LASTGAME`;
 	do
-		for i in `seq 0 $LAST`;
+		for a in `seq 1 $NUMATTEMPTS`;
 		do
-			for j in `seq $i $LAST`;
+			for i in `seq 0 $LAST`;
 			do
-			
-				#echo ${TYPES[$i]} ${TYPES[$j]} $a${TYPES[$i]}${TYPES[$j]} ${GAMES[$k]}
-				qsub -e /data/people/betsy/error/e.txt -o /data/people/betsy/output/o.txt -cwd ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a${TYPES[$i]}${TYPES[$j]} ${GAMES[$k]}
+				for j in `seq $i $LAST`;
+				do
+					qsub -cwd ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${GAMES[$k]} ${BOOLS[$b]}
+				
+				done
 			done
 		done
 	done

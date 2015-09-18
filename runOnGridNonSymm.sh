@@ -1,25 +1,39 @@
 #!/bin/bash
-TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
-#TYPES=(ABDC ABCxD)
-# length-1
-LAST=8
-NUMATTEMPTS=25
-NUMGAMES=1
+#USE THIS SCRIPT FOR NON SYMMETRIC GAMES
+#GAMES=('7')
 GAMES=('7' '8')
 
-for k in `seq 0 $NUMGAMES`;
+TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
+#TYPES=(ABCD)
+
+BOOLS=('true')
+
+NUMATTEMPTS=50
+
+# length-1
+NUMGAMES=${#GAMES[@]}
+LASTGAME=`expr $NUMGAMES - 1`
+NUMTYPES=${#TYPES[@]}
+LAST=`expr $NUMTYPES - 1`
+NUMBOOLS=${#BOOLS[@]}
+LASTBOOL=`expr $NUMBOOLS - 1`
+
+for b in `seq 0 $LASTBOOL`;
 do
-	for a in `seq 1 $NUMATTEMPTS`;
+
+	for k in `seq 0 $LASTGAME`;
 	do
-		for i in `seq 0 $LAST`;
+		for a in `seq 1 $NUMATTEMPTS`;
 		do
-			for j in `seq 0 $LAST`;
+			for i in `seq 0 $LAST`;
 			do
+				for j in `seq 0 $LAST`;
+				do
 			
-				#echo ${TYPES[$i]} ${TYPES[$j]} $a${TYPES[$i]}${TYPES[$j]} ${GAMES[$k]}
-				qsub -e /data/people/betsy/error/ -o /data/people/betsy/output/ -cwd ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a${TYPES[$i]}${TYPES[$j]} ${GAMES[$k]}	
+					qsub -cwd -l day ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${GAMES[$k]} ${BOOLS[$b]}
+				
+				done
 			done
 		done
 	done
 done
-	

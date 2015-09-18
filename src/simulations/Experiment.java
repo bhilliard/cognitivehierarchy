@@ -1718,7 +1718,7 @@ public class Experiment {
 		// Choose from a json game file or built-in option from the list above.
 		String file = gameFile[6];
 		if(args.length>3){
-			file = gameFile[Integer.valueOf(args[3].split("_")[0])];
+			file = gameFile[Integer.valueOf(args[3])];
 		}
 
 		double reward = 50.0; // Set this to set the rewards for goals.
@@ -1729,7 +1729,7 @@ public class Experiment {
 
 		// ///Experiment Parameters/////
 		// determine what experiments to run
-		String experimentName = "2015_09_16_testing";
+		String experimentName = "2015_09_18";
 		boolean runKLevel = false;
 		boolean runTwoQLearners_TypesOptional = false;
 		boolean runESS = true;
@@ -1742,8 +1742,8 @@ public class Experiment {
 
 		// pick a visualizer IF <=1 args true
 		boolean showPolicyExplorer = false;
-		boolean showGameReplays = true;
-		boolean saveLearning = showGameReplays || true;
+		boolean showGameReplays = false;
+		boolean saveLearning = showGameReplays || false;
 
 		// ///////Agent Parameters//////
 		// K LEVEL PARAMETERS
