@@ -27,15 +27,16 @@ LASTBOOL=`expr $NUMBOOLS - 1`
 #don't use this loop until the files indicate which condition is being used
 for b in `seq 0 $LASTBOOL`;
 do
-	for k in `seq 0 $LASTGAME`;
+	for a in `seq 1 $NUMATTEMPTS`;
 	do
-		for a in `seq 1 $NUMATTEMPTS`;
-		do
 			
-			for i in `seq 0 $LASTSYM`;
-			do
+		for i in `seq 0 $LAST`;
+		do
 				
-				for j in `seq $i $LASTSYM`;
+			for j in `seq $i $LAST`;
+				do
+
+				for k in `seq 0 $LASTSYM`;
 				do
 					#echo $j $1
 					qsub -cwd -l $1 ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${SYMGAMES[$k]} ${BOOLS[$b]}
@@ -43,9 +44,10 @@ do
 				done
 			done
 			
-			for i in `seq 0 $LASTNONSYMM`;
-			do
-				for j in `seq 0 $LASTNONSYMM`;
+			
+			for j in `seq 0 $LAST`;
+			do	
+				for k in `seq 0 $LASTNONSYM`;
 				do
 					#echo $j $1
 					qsub -cwd -l $1 ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${NONSYMGAMES[$k]} ${BOOLS[$b]}
