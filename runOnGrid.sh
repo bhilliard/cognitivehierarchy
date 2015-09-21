@@ -21,7 +21,7 @@ LAST=`expr $NUMTYPES - 1`
 NUMBOOLS=${#BOOLS[@]}
 LASTBOOL=`expr $NUMBOOLS - 1`
 
-#don't use this loop until the filesindicate which condition is being used
+#don't use this loop until the files indicate which condition is being used
 for b in `seq 0 $LASTBOOL`;
 do
 	for k in `seq 0 $LASTGAME`;
@@ -32,7 +32,7 @@ do
 			do
 				for j in `seq $i $LAST`;
 				do
-					qsub -cwd ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${GAMES[$k]} ${BOOLS[$b]}
+					qsub -cwd -l day ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${GAMES[$k]} ${BOOLS[$b]}
 				
 				done
 			done

@@ -372,7 +372,7 @@ public class MetricPlotter {
 	public static void main(String[] args) {
 
 		MetricPlotter plot = new MetricPlotter(
-				"../TwoAgentsHall_3by5_noWalls/2015_09_16_12_43_49_059", "",150);
+				"../TwoAgentsHall_3by5_noWalls/2015_09_21_09_09_09_147", "",150);
 		plot.plotLearningReward();
 		//plot.plotTrialReward();
 

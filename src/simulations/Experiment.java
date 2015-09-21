@@ -781,7 +781,7 @@ public class Experiment {
 
 							jointRewards = ga
 									.getJointRewards();
-
+ 
 							agentReward = new HashMap<String, Double>();
 
 							for (Map<String, Double> rewards : jointRewards) {
@@ -839,7 +839,7 @@ public class Experiment {
 					String outFile = outDir + "Green_Q_" + agentPrefTypes[t0]
 							+ "_Blue_Q_" + agentPrefTypes[t1] + "_Attempt_" + a
 							+ "/" + "G_" + agentPrefTypes[t0] + "_B_"
-							+ agentPrefTypes[t1] + "_Fixed";
+							+ agentPrefTypes[t1] + "_Fixed_"+a;
 
 					ga.writeToFile(outFile, sp);
 
@@ -1803,7 +1803,7 @@ public class Experiment {
 
 		//TODO: start editing here (THIS IS JUST SO I CAN FIND THE SPOT!!!)
 		// Choose from a json game file or built-in option from the list above.
-		String file = gameFile[5];
+		String file = gameFile[6];
 		if(args.length>3){
 			file = gameFile[Integer.valueOf(args[3])];
 		}
@@ -1816,13 +1816,13 @@ public class Experiment {
 
 		// ///Experiment Parameters/////
 		// determine what experiments to run
-		String experimentName = "2015_09_18";
+		String experimentName = "2015_09_21_test2";
 		boolean runKLevel = false;
 		boolean runTwoQLearners_TypesOptional = false;
 		boolean runESS = true;
 
 		int numTrials = 100;
-		int numLearningEpisodes = 1000;
+		int numLearningEpisodes = 30000;
 		int attempts = 1;
 
 		int numToVisualize = 1;
@@ -1830,7 +1830,7 @@ public class Experiment {
 		// pick a visualizer IF <=1 args true
 		boolean showPolicyExplorer = false;
 		boolean showGameReplays = false;
-		boolean saveLearning = showGameReplays || false;
+		boolean saveLearning = showGameReplays || true;
 
 		// ///////Agent Parameters//////
 		// K LEVEL PARAMETERS
@@ -1861,7 +1861,7 @@ public class Experiment {
 		if(args.length>4){
 			if (args[4].compareToIgnoreCase("true")==0){
 				runWithRandomStartStates = true;
-				numLearningEpisodes = 15000;
+				numLearningEpisodes = 30000;
 			}else{
 				runWithRandomStartStates = false;
 			}

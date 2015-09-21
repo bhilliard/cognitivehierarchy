@@ -6,7 +6,7 @@ import string
 import os
 import numpy as np
 
-def combineData(fname,label):
+def combineData(fname,label, symm):
 	
 	types = ["ABCD", "ABDC", "BACD", "BADC", "ABCxD","BACxD", "AxBCD", "AxBDC", "AxBCxD"] 
 	numAgents = len(types)
@@ -50,7 +50,7 @@ def combineData(fname,label):
 		
 		if os.path.isdir(fname+subdir):
 			for nameFile in os.listdir(fname+subdir):
-				if os.path.isdir(fname+subdir+"/"+nameFile):
+				if os.path.isdir(fname+subdir+"/"+nameFile) and "VI" not in nameFile:
 					
 					#construct the line of the output csv file
 					outLine = ['GNAME','BNAME','GSCORE','BSCORE','ATTNUM','GHAPPY','BHAPPY']
@@ -93,7 +93,7 @@ def combineData(fname,label):
 							if bnameLoc!=gnameLoc:
 								gValues[bnameLoc][gnameLoc].append(bscore)
 							gValues[gnameLoc][bnameLoc].append(gscore)
-							if bnameLoc != gnameLoc:
+							if bnameLoc != gnameLoc and symm is 'false':
 								bValues[bnameLoc][gnameLoc].append(gscore)
 							ghappyVal = happiness(gscore, bscore, gname)
 							bhappyVal = happiness(bscore, gscore, bname)
@@ -209,9 +209,12 @@ def outputMatrix(gmatrix, bmatrix, outFileName, types, meanRow, sdRow,label):
 	writer.writerow(sdRow)
 	writer.writerow([label])
 
-def main(filename,label):
-	combineData(filename,label)
+def main(filename,label,symm):
+	combineData(filename,label,symm)
 
 
 if __name__ == "__main__":
-	main(sys.argv[1],sys.argv[2])
+	if(len(sys.argv)>3):
+		main(sys.argv[1],sys.argv[2],sys.argv[3])
+	else:
+		main(sys.argv[1],sys.argv[2],'false')
