@@ -1,21 +1,24 @@
 #!/bin/bash
-# USE THIS FOR SYMMETRIC GAMES
+# USE THIS FOR ANY GAMES, JUST MAKE SURE YOU GET SYMMETRIC AND NON SYMMETRIC CORRECT
+# first arg is day or hour
 
-#GAMES=('6')
-GAMES=('6')
+SYMGAMES=('6' '10' '14') #'5' '6' '10' '11' '12' '13' '14'
+NONSYMGAMES=('7' '8') #'7' '8'
 
-#TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
-TYPES=(ABCD ABDC BACD BADC AxBCxD)
+TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
+#TYPES=(ABCD ABDC BACD BADC AxBCxD)
 
 #true will run with random start states, false don't
 BOOLS=('true')
 
-NUMATTEMPTS=2
+NUMATTEMPTS=3
 
-#don't touch these parameters, they just control the ends of the loops
+#don't touch the remaining parameters, they just control the ends of the loops
 # length-1
-NUMGAMES=${#GAMES[@]}
-LASTGAME=`expr $NUMGAMES - 1`
+NUMSYMGAMES=${#GAMES[@]}
+LASTSYM=`expr $NUMSYMGAMES - 1`
+NUMNONSYMGAMES=${#GAMES[@]}
+LASTNONSYM=`expr $NUMNONSYMGAMES - 1`
 NUMTYPES=${#TYPES[@]}
 LAST=`expr $NUMTYPES - 1`
 NUMBOOLS=${#BOOLS[@]}
@@ -28,14 +31,29 @@ do
 	do
 		for a in `seq 1 $NUMATTEMPTS`;
 		do
-			for i in `seq 0 $LAST`;
+			
+			for i in `seq 0 $LASTSYM`;
 			do
-				for j in `seq $i $LAST`;
+				
+				for j in `seq $i $LASTSYM`;
 				do
-					qsub -cwd -l day ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${GAMES[$k]} ${BOOLS[$b]}
+					#echo $j $1
+					qsub -cwd -l $1 ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${SYMGAMES[$k]} ${BOOLS[$b]}
 				
 				done
 			done
+			
+			for i in `seq 0 $LASTNONSYMM`;
+			do
+				for j in `seq 0 $LASTNONSYMM`;
+				do
+					#echo $j $1
+					qsub -cwd -l $1 ./runJavaExperiment.sh ${TYPES[$i]} ${TYPES[$j]} $a'_'${TYPES[$i]}'_'${TYPES[$j]}'_'${BOOLS[$b]}  ${NONSYMGAMES[$k]} ${BOOLS[$b]}
+				
+				done
+			done
+			
+
 		done
 	done
 done

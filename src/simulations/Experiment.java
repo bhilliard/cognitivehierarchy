@@ -121,7 +121,7 @@ public class Experiment {
 	private final int TIMEOUT = 100;
 
 	private String[][][][] convergence;
-	private String agentRewards = "Agent Test Rewards: \n";
+	private String agentRewards = "";
 
 	/**
 	 * Basic constructor
@@ -804,15 +804,14 @@ public class Experiment {
 
 					}
 					
-					agent0Rewards = "agent0";
-					agent1Rewards = "agent1";
+					agent0Rewards = ""+a+",agent0";
+					agent1Rewards = ""+a+",agent1";
 					
 					for(Map<String,Double> rewards: testRewards){
 						agent0Rewards+=","+rewards.get("agent0");
 						agent1Rewards+=","+rewards.get("agent1");
 					}
-					agent0Rewards+=","+a;
-					agent1Rewards+=","+a;
+		
 					
 					this.agentRewards +=agent0Rewards+'\n'+agent1Rewards;
 					
@@ -1816,7 +1815,7 @@ public class Experiment {
 
 		// ///Experiment Parameters/////
 		// determine what experiments to run
-		String experimentName = "2015_09_21_test2";
+		String experimentName = "2015_09_21_fullTest";
 		boolean runKLevel = false;
 		boolean runTwoQLearners_TypesOptional = false;
 		boolean runESS = true;
@@ -1830,7 +1829,7 @@ public class Experiment {
 		// pick a visualizer IF <=1 args true
 		boolean showPolicyExplorer = false;
 		boolean showGameReplays = false;
-		boolean saveLearning = showGameReplays || true;
+		boolean saveLearning = showGameReplays || false;
 
 		// ///////Agent Parameters//////
 		// K LEVEL PARAMETERS
@@ -1861,7 +1860,6 @@ public class Experiment {
 		if(args.length>4){
 			if (args[4].compareToIgnoreCase("true")==0){
 				runWithRandomStartStates = true;
-				numLearningEpisodes = 30000;
 			}else{
 				runWithRandomStartStates = false;
 			}
