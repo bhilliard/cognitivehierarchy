@@ -15,9 +15,9 @@ NUMATTEMPTS=3
 
 #don't touch the remaining parameters, they just control the ends of the loops
 # length-1
-NUMSYMGAMES=${#GAMES[@]}
+NUMSYMGAMES=${#SYMGAMES[@]}
 LASTSYM=`expr $NUMSYMGAMES - 1`
-NUMNONSYMGAMES=${#GAMES[@]}
+NUMNONSYMGAMES=${#NONSYMGAMES[@]}
 LASTNONSYM=`expr $NUMNONSYMGAMES - 1`
 NUMTYPES=${#TYPES[@]}
 LAST=`expr $NUMTYPES - 1`
