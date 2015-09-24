@@ -12,7 +12,7 @@ from pylab import *
 def graphLearning(filename, label, a0Type, a1Type):
 	# read in file
 	numFound = 0.0
-	
+
 	ydata0 = []
 	ydata1 = []
 	ydata0_avg=[]
@@ -40,31 +40,32 @@ def graphLearning(filename, label, a0Type, a1Type):
 					else:
 						for r in range(4,len(row)):
 							ydata1[r-4]+=float(row[r])
-	for r in ydata0:
-		ydata0_avg.append(r/numFound)
-	for r in ydata1:
-		ydata1_avg.append(r/numFound)
+	if len(ydata0) > 0:
+		for r in ydata0:
+			ydata0_avg.append(r/numFound)
+		for r in ydata1:
+			ydata1_avg.append(r/numFound)
 	
-	y0Sum = calcLifetimeSum(ydata0_avg)
-	y1Sum = calcLifetimeSum(ydata1_avg)
-	xdata = [x for x in range(len(y1Sum))]
-	#print xdata
-	#print ydata0
-	# make 2 lined graph
-	plt.figure()
+		y0Sum = calcLifetimeSum(ydata0_avg)
+		y1Sum = calcLifetimeSum(ydata1_avg)
+		xdata = [x for x in range(len(y1Sum))]
+		#print xdata
+		#print ydata0
+		# make 2 lined graph
+		plt.figure()
 	
-	l0, = plt.plot(xdata, y0Sum, '.-',label=a0Type)
-	l1, = plt.plot(xdata, y1Sum, '.-',label=a1Type)
-	plt.legend(handles=[l0,l1])
-	plt.xlabel('Learning Iteration (in 100 games)')
-	plt.ylabel('Total Lifetime Reward')
-	plt.title('Lifetime Reward in '+label)
-	plt.savefig(filename+'/'+label+"_lifetimeReward_"+a0Type+"_"+a1Type+".png",dpi=(640/8))
-	plt.close()
+		l0, = plt.plot(xdata, y0Sum, '.-',label=a0Type)
+		l1, = plt.plot(xdata, y1Sum, '.-',label=a1Type)
+		plt.legend(handles=[l0,l1])
+		plt.xlabel('Learning Iteration (in 100 games)')
+		plt.ylabel('Total Lifetime Reward')
+		plt.title('Lifetime Reward in '+label)
+		plt.savefig(filename+'/'+label+"_lifetimeReward_"+a0Type+"_"+a1Type+".png",dpi=(640/8))
+		plt.close()
 
 def calcLifetimeSum(dataIn):
 	dataRow = []
-	
+	print dataIn
 	for i in dataIn:
 		dataRow.append(float(i))
 	summed=[dataRow[0]]

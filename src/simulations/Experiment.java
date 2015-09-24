@@ -1816,7 +1816,7 @@ public class Experiment {
 
 		// ///Experiment Parameters/////
 		// determine what experiments to run
-		String experimentName = "2015_09_24_shortTest";
+		String experimentName = "2015_09_24_longRun";
 		boolean runKLevel = false;
 		boolean runTwoQLearners_TypesOptional = false;
 		boolean runESS = true;

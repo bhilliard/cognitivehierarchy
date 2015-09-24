@@ -2,16 +2,16 @@
 # USE THIS FOR ANY GAMES, JUST MAKE SURE YOU GET SYMMETRIC AND NON SYMMETRIC CORRECT
 # first arg is day or hour
 
-SYMGAMES=('6') #'5' '6' '10' '11' '12' '13' '14'
-NONSYMGAMES=() #'7' '8'
+SYMGAMES=('6' '10' '13' '14') #'5' '6' '10' '11' '12' '13' '14'
+NONSYMGAMES=('7' '8') #'7' '8'
 
-#TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
-TYPES=(ABCD ABDC BACD AxBCxD)
+TYPES=(ABCD ABDC BACD BADC ABCxD BACxD AxBCD AxBDC AxBCxD)
+#TYPES=(ABCD ABDC BACD AxBCxD)
 
 #true will run with random start states, false don't
 BOOLS=('true')
 
-NUMATTEMPTS=1
+NUMATTEMPTS=6
 
 #don't touch the remaining parameters, they just control the ends of the loops
 # length-1
