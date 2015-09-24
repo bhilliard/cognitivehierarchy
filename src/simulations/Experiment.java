@@ -664,7 +664,7 @@ public class Experiment {
 						//this controls what start state the agents see
 						//note, we have to have them see the true start state first
 						//so that names and types for the agents exist 
-						if(i!=0 && i%100!=0){
+						if(i!=0 && i%100!=0 && i<numLearningEpisodes){
 							createWorld(runWithRandomStartStates,agentTypes);
 						}else{
 							createWorld();
@@ -734,7 +734,7 @@ public class Experiment {
 							rewardMatrix[t1][t0][1] += agentReward
 									.get("agent1");
 						}
-
+//Don't test for convergence anymore
 						int convergeWindow = 0;
 
 						if (i >= numLearningEpisodes + numGameTrials
@@ -1815,7 +1815,7 @@ public class Experiment {
 
 		// ///Experiment Parameters/////
 		// determine what experiments to run
-		String experimentName = "2015_09_21_fullTest";
+		String experimentName = "2015_09_24_shortTest";
 		boolean runKLevel = false;
 		boolean runTwoQLearners_TypesOptional = false;
 		boolean runESS = true;

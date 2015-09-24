@@ -8,7 +8,12 @@ import os
 def combineClassData(fname,label):
 	maxAttempt = 0
 	
-	outLoc = ''+fname+'/../'+fname+label+'_combinedPolicyData.csv'
+	toMake = fname+label+"_rawData"
+	try:
+		os.stat(toMake)
+	except:
+		os.mkdir(toMake)
+	outLoc = fname+label+"_rawData/"+label+'_combinedPolicyData.csv'
 	outFile = open(outLoc, 'w')
 	writer = csv.writer(outFile)
 	#print fname

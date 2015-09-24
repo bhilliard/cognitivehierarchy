@@ -24,7 +24,7 @@ def createMatrix(fname, label, typeToMake):
 	for i in range(1,numAgents+1):
 		toFind+=i
 
-	toRead = fname+'/'+label+'_combinedPolicyData.csv'
+	toRead = fname+label+"_rawData/"+label+'_combinedPolicyData.csv'
 	with open(toRead, 'rb') as csvfile:
 		f = csv.reader(csvfile, delimiter=',', quotechar='|')
 		for row in f:
@@ -85,14 +85,16 @@ def prettyPrint(matrix, types):
 def outputMatrix(bmatrix, gmatrix, outFile, types,label):
 
 	writer = csv.writer(outFile)
-	
+	writer.writerow([label])
 	writer.writerow(types)
 	for i in range(0,len(gmatrix)):
 		row = [types[i+1]]
 		for j in range(0,len(bmatrix)):
 			row.append("("+str(gmatrix[i][j])+","+str(bmatrix[i][j])+")")
 		writer.writerow(row)
-	writer.writerow([label])
+	writer.writerow([])
+	writer.writerow([])
+	
 
 def main(filename,label,typeToMake):
 	createMatrix(filename, label, typeToMake)

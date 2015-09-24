@@ -7,6 +7,7 @@ import os
 import numpy as np
 
 def combineData(fname,label, symm):
+	print symm
 	
 	types = ["ABCD", "ABDC", "BACD", "BADC", "ABCxD","BACxD", "AxBCD", "AxBDC", "AxBCxD"] 
 	numAgents = len(types)
@@ -31,13 +32,19 @@ def combineData(fname,label, symm):
 	foundMatrix = [[0.0 for x in range(numAgents)] for x in range(numAgents)]
 	
 	#get names from folder
-	outLoc = ''+fname+'/../'+fname+label+'_combinedData.csv'
+	
+	toMake = fname+label+"_rawData"
+	try:
+		os.stat(toMake)
+	except:
+		os.mkdir(toMake)
+	outLoc = fname+label+"_rawData/"+label+'_combinedData.csv'
 	outFile = open(outLoc, 'w')
 	writer = csv.writer(outFile)
 
-	mOutFileName = ''+fname+'/../'+fname+label+'_matrix.csv'
-	sdOutFileName = ''+fname+'/../'+fname+label+'_SDmatrix.csv'
-	hOutFileName = ''+fname+'/../'+fname+label+'_happymatrix.csv'	
+	mOutFileName = ''+fname+'../'+fname+label+'_matrix.csv'
+	sdOutFileName = ''+fname+'../'+fname+label+'_SDmatrix.csv'
+	hOutFileName = ''+fname+'../'+fname+label+'_happymatrix.csv'	
 	#counting files found to check that all files have been found
 	gfound = 0
 	bfound = 0
@@ -62,7 +69,7 @@ def combineData(fname,label, symm):
 						gnameLoc = types.index(gname)
 						bnameLoc = types.index(bname)
 						foundMatrix[gnameLoc][bnameLoc]+=1
-						if bnameLoc!=gnameLoc:					
+						if bnameLoc!=gnameLoc and symm is 'true':					
 							foundMatrix[bnameLoc][gnameLoc]+=1					
 						outLine[0] = gname
 						outLine[1] = bname
@@ -90,20 +97,24 @@ def combineData(fname,label, symm):
 								
 								line = f.readline()
 							bValues[gnameLoc][bnameLoc].append(bscore)
-							if bnameLoc!=gnameLoc:
+							if bnameLoc!=gnameLoc and symm is 'true':
+								#print "IN TRUE CATCH"
 								gValues[bnameLoc][gnameLoc].append(bscore)
 							gValues[gnameLoc][bnameLoc].append(gscore)
-							if bnameLoc != gnameLoc and symm is 'false':
+							if bnameLoc != gnameLoc and symm is 'true':
+								#print "IN TRUE CATCH"
 								bValues[bnameLoc][gnameLoc].append(gscore)
 							ghappyVal = happiness(gscore, bscore, gname)
 							bhappyVal = happiness(bscore, gscore, bname)
 							outLine[5]=str(ghappyVal)
 							outLine[6]=str(bhappyVal)
 							ghappyVals[gnameLoc][bnameLoc].append(ghappyVal)
-							if bnameLoc!=gnameLoc:
+							if bnameLoc!=gnameLoc and symm is 'true':
+								#print "IN TRUE CATCH"
 								bhappyVals[bnameLoc][gnameLoc].append(ghappyVal)
 							bhappyVals[gnameLoc][bnameLoc].append(bhappyVal)
-							if bnameLoc!=gnameLoc:
+							if bnameLoc!=gnameLoc and symm is 'true':
+								#print "IN TRUE CATCH"
 								ghappyVals[bnameLoc][gnameLoc].append(bhappyVal)
 							#print outLine
 							writer.writerow(outLine)
@@ -198,16 +209,19 @@ def prettyPrint(matrix, types):
 def outputMatrix(gmatrix, bmatrix, outFileName, types, meanRow, sdRow,label):
 	outFile = open(outFileName, 'w')
 	writer = csv.writer(outFile)
-	
+	writer.writerow([label])
 	writer.writerow(types)
 	for i in range(0,len(gmatrix)):
 		row = [types[i+1]]
 		for j in range(0,len(gmatrix[0])):
 			row.append("("+"{0:6.2f}".format(gmatrix[i][j])+','+"{0:6.2f}".format(bmatrix[i][j])+")")
 		writer.writerow(row)
-	writer.writerow(meanRow)
-	writer.writerow(sdRow)
-	writer.writerow([label])
+	if len(sdRow)>0:
+		writer.writerow(meanRow)
+		writer.writerow(sdRow)
+	writer.writerow([])
+	writer.writerow([])
+	
 
 def main(filename,label,symm):
 	combineData(filename,label,symm)
@@ -217,4 +231,4 @@ if __name__ == "__main__":
 	if(len(sys.argv)>3):
 		main(sys.argv[1],sys.argv[2],sys.argv[3])
 	else:
-		main(sys.argv[1],sys.argv[2],'false')
+		main(sys.argv[1],sys.argv[2],'true')
