@@ -4,6 +4,6 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/burlap"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/MultiAgentGames"/>
-	<classpathentry exported="true" kind="lib" path="/gpfs/main/home/betsy/git_probMods/burlap/lib/jfreechart-1.0.17.jar"/>
+	<classpathentry kind="lib" path="/burlap/lib/jfreechart-1.0.17.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
