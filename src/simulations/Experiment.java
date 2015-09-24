@@ -122,6 +122,7 @@ public class Experiment {
 
 	private String[][][][] convergence;
 	private String agentRewards = "";
+	private String username = System.getenv("USER");
 
 	/**
 	 * Basic constructor
@@ -1765,7 +1766,7 @@ public class Experiment {
 		gameName = gameName.substring(gameName.lastIndexOf("/")+1);
 		if (bashLoopIndex != null) {
 			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
-			outDir = "/data/people/betsy/"+experimentName+"_"+gameName+"/" +bashLoopIndex + "_"
+			outDir = "/data/people/"+this.username+"/"+experimentName+"_"+gameName+"/" +bashLoopIndex + "_"
 					+ ft.format(date) + "/";
 		} else {
 			ft = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS");
