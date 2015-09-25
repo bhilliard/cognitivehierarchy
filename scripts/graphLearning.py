@@ -17,14 +17,15 @@ def graphLearning(filename, label, a0Type, a1Type):
 	ydata1 = []
 	ydata0_avg=[]
 	ydata1_avg=[]
+	# open the file with data pulled from agentRewards.csv file
 	toRead = filename+label+"_rawData/"+label+'_combinedOverLearnReward.csv'
 	with open(toRead, 'rb') as csvfile:
 		f = csv.reader(csvfile, delimiter=',', quotechar='|')
 		for row in f:
-			
+			# if this row matches the agent types
 			if (row[2]==a0Type) and (row[3]==a1Type):
 				numFound +=1.0
-				
+				#if this row is for agent0
 				if row[1] is '0':
 					if len(ydata0) == 0:
 						for r in row[4:]:
@@ -32,7 +33,7 @@ def graphLearning(filename, label, a0Type, a1Type):
 					else:
 						for r in range(4,len(row)):
 							ydata0[r-4]+=float(row[r])
-					
+				#if this row is for agent1
 				elif row[1] is '1':
 					if len(ydata1) == 0:
 						for r in row[4:]:
@@ -40,6 +41,7 @@ def graphLearning(filename, label, a0Type, a1Type):
 					else:
 						for r in range(4,len(row)):
 							ydata1[r-4]+=float(row[r])
+	# if we found matching rows, calc the sums and graph	
 	if len(ydata0) > 0:
 		for r in ydata0:
 			ydata0_avg.append(r/numFound)
@@ -63,6 +65,7 @@ def graphLearning(filename, label, a0Type, a1Type):
 		plt.savefig(filename+'/'+label+"_lifetimeReward_"+a0Type+"_"+a1Type+".png",dpi=(640/8))
 		plt.close()
 
+# calculates a running sum of the rewards
 def calcLifetimeSum(dataIn):
 	dataRow = []
 	print dataIn
@@ -76,6 +79,7 @@ def calcLifetimeSum(dataIn):
 		summed.append(a)
 	return summed
 
+# handles graphing all combos. NOTE: this is currently only for symmetric games
 def graphAllAgentsSymm(filename,label):
 	types = ["ABCD", "ABDC", "BACD", "BADC", "ABCxD","BACxD", "AxBCD", "AxBDC", "AxBCxD"] 
 	

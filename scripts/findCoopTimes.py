@@ -35,12 +35,11 @@ def calcGamesToCooperate(fname, label):
 	#print fname
 	numfound = 0
 
-	#create 
+	#create matrices for data and results
 	foundMatrix = [[0.0 for x in range(numAgents)] for x in range(numAgents)]
 	numCoop = [[0.0 for x in range(numAgents)] for x in range(numAgents)]
 	numGN = [[0.0 for x in range(numAgents)] for x in range(numAgents)]
 	numNG = [[0.0 for x in range(numAgents)] for x in range(numAgents)]
-
 
 	firstCoop = [[[] for x in range(numAgents)] for x in range(numAgents)]
 	learnTime = [[[] for x in range(numAgents)] for x in range(numAgents)]
@@ -55,12 +54,15 @@ def calcGamesToCooperate(fname, label):
 	percCoop = [[0.0 for x in range(numAgents)] for x in range(numAgents)]
 	percGN = [[0.0 for x in range(numAgents)] for x in range(numAgents)]
 	percNG = [[0.0 for x in range(numAgents)] for x in range(numAgents)]
+	
+	# for all agentRewards files, pull the data into one file and add data to calculate
+	# learn and "converge" points	
 	for subdir in os.listdir(fname):
 		if os.path.isdir(fname+subdir):
 			if os.path.isfile(fname+subdir+"/agentRewards.csv"):
 				outLineG=[]
 				outLineB=[]
-				
+				#pull out the attribute number from file name
 				attNum = subdir.split('_')[0]
 				outLineG.append(attNum)
 				outLineG.append('0')
@@ -70,18 +72,20 @@ def calcGamesToCooperate(fname, label):
 				toRead = fname+subdir+"/agentRewards.csv"
 				numfound+=1
 				#print subdir
-				
+				# pull out agent preferences from file name
 				gname = subdir.split('_')[1]
 				bname = subdir.split('_')[2]
+				# add names to two outfile lines that will be written
 				outLineG.append(gname)
 				outLineG.append(bname)
 				outLineB.append(gname)
 				outLineB.append(bname)
-			
+				# get the index of the agent's type
 				gLoc = types.index(gname)
 				bLoc = types.index(bname)
 				foundMatrix[gLoc][bLoc]+=1;
 				lines = []
+				# read in the file and split up the data into the right out lines
 				with open(toRead, 'rb') as csvfile:
 					f = csv.reader(csvfile, delimiter=',', quotechar='|')
 					
@@ -97,6 +101,7 @@ def calcGamesToCooperate(fname, label):
 				timeToGN = findTimeToGN(lines)
 				timeToNG = findTimeToNG(lines)
 				#print gname+" "+bname+"coop "+str(timeToCoop)+" learn "+str(timeToLearn)
+				# if the conditions were found, add the data					
 				if timeToCoop>-1:
 					firstCoop[gLoc][bLoc].append(timeToCoop)
 				if timeToLearn>-1:
@@ -114,6 +119,7 @@ def calcGamesToCooperate(fname, label):
 				print fname+subdir+"/agentRewards.csv"
 
 	
+	# calculate the means across the learning trials
 	for i in range(0,len(firstCoop)):
 		for j in range(0, len(firstCoop[0])):
 			if len(firstCoop[i][j])>0:
