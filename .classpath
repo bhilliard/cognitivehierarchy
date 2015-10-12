@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/burlap"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/MultiAgentGames"/>
 	<classpathentry kind="lib" path="/burlap/lib/jfreechart-1.0.17.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_45]"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
