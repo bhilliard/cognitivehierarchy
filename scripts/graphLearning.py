@@ -100,7 +100,7 @@ def makeMatrix(inFileName, outFileName, types, label):
 
 	for row in inFile:
 		inRow = row.split(',')
-		partialRewardRows[types.index(inRow[0])][types.index(inRow[1])][endEpisodes.index(inRow[2])] = "("+"{0:6.2f}".format(float(inRow[3]))+','+"{0:6.2f}".format(float(inRow[4]))+")"
+		partialRewardRows[types.index(inRow[0])][types.index(inRow[1])][endEpisodes.index(float(inRow[2]))] = "("+"{0:6.2f}".format(float(inRow[3]))+','+"{0:6.2f}".format(float(inRow[4]))+")"
 	inFile.close()
 	for endEpisode in range(len(endEpisodes)):
 		writer.writerow([label+" Reward After "+str(endEpisodes[endEpisode])+" Episodes"])
